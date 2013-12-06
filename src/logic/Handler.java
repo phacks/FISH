@@ -1,0 +1,159 @@
+package logic;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Hashtable;
+
+
+public class Handler extends Thread{
+	Socket socket;
+	BufferedReader rd;
+	PrintWriter wr;
+
+	Connection connection;
+
+	PreparedStatement registerClientStatement;
+	PreparedStatement findClientStatement;
+	PreparedStatement unregisterClientStatement;
+	private PreparedStatement addFileStatement;
+	private PreparedStatement findFilesStatement;
+	private PreparedStatement deleteFilesStatement;
+	String clientName;
+
+	Handler(Socket socket, Connection connection) throws IOException, SQLException { // thread constructor
+		this.socket = socket;
+		this.connection = connection;
+
+		prepareStatements(connection);
+
+		rd = new BufferedReader( new InputStreamReader(socket.getInputStream()));
+		wr = new PrintWriter(socket.getOutputStream());
+	}
+
+	public void run(){
+
+		String str;
+		try {
+			while ((str = rd.readLine()) != null){
+				String[] parseCommand = str.split(":");
+				String command = parseCommand[0];
+
+				if (command.equals("register")){
+					String[] parseFiles = parseCommand[1].split(",");
+					clientName = parseCommand[2];
+
+					String address = socket.getInetAddress().getHostAddress();
+					int port = socket.getPort();
+
+					registerClient(clientName, address, port);
+
+					addFiles(clientName, parseFiles);
+				}
+				
+				if (command.equals("unregister")){
+					deleteFiles(clientName);
+					unregisterClient(clientName);
+				}
+			}
+
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	private void unregisterClient(String clientName2) throws SQLException {
+		unregisterClientStatement.setString(1, clientName);
+		int rows = unregisterClientStatement.executeUpdate();
+		if (rows > 0) {
+			System.out.println(rows);
+		} else {
+			System.err.println("Error : " + clientName + " files could not be deleted");
+		}
+	}
+
+	private void deleteFiles(String clientName2) throws SQLException {
+		
+		deleteFilesStatement.setString(1, clientName);
+		int rows = deleteFilesStatement.executeUpdate();
+		if (rows > 0) {
+			System.out.println(rows);
+		} else {
+			System.err.println("Error : " + clientName + " files could not be deleted");
+		}
+		
+	}
+
+	private void addFiles(String clientName, String[] parseFiles) throws SQLException {
+
+		for(String file : parseFiles){
+			String fileName = file.split("&")[0];
+			String fileType = file.split("&")[1];
+			
+			addFileStatement.setString(1, fileName);
+			addFileStatement.setString(2, fileType);
+			addFileStatement.setString(3, clientName);
+
+			int rows = addFileStatement.executeUpdate();
+			if (rows == 1) {
+				// System.out.println(clientName + " has been registered");
+			} else {
+				System.err.println("Error : " + clientName + " could not be registered");
+			}
+		}
+	}
+
+
+	private void registerClient(String clientName, String address, int port) throws Exception {
+		findClientStatement.setString(1, clientName);
+
+		ResultSet result = null;
+		result = findClientStatement.executeQuery();
+
+		if (result.next()) {
+			// account exists, instantiate, put in cache and throw exception.
+			throw new Exception("Error : " + clientName + " is already registered");
+		}
+		else{
+			result.close();
+
+			registerClientStatement.setString(1, clientName);
+			registerClientStatement.setString(2, address);
+			registerClientStatement.setInt(3, port);
+
+
+
+			int rows = registerClientStatement.executeUpdate();
+			if (rows == 1) {
+				System.out.println(clientName + " has been registered");
+			} else {
+				System.err.println("Error : " + clientName + " could not be registered");
+			}
+		}		
+	}
+
+	private void prepareStatements(Connection connection) throws SQLException {
+		registerClientStatement = connection.prepareStatement("INSERT INTO USERS VALUES (?, ?, ?)");
+		findClientStatement = connection.prepareStatement("SELECT * from USERS WHERE CLIENTNAME = ?");
+		unregisterClientStatement = connection.prepareStatement("DELETE FROM USERS WHERE CLIENTNAME = ?");
+
+		addFileStatement = connection.prepareStatement("INSERT INTO FILES (filename, type, clientname) VALUES (?, ?, ?)");
+		findFilesStatement = connection.prepareStatement("SELECT * from FILES WHERE CLIENTNAME = ?");
+		deleteFilesStatement = connection.prepareStatement("DELETE FROM FILES WHERE CLIENTNAME = ?");
+	}
+
+
+}
