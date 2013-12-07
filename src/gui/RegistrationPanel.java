@@ -22,6 +22,7 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 	private JButton registerButton = new JButton("Register");
 	private Client client;
 	private ClientWindow window;
+	private JButton testButton = new JButton("Test");
 	
 	public RegistrationPanel(Client client, ClientWindow window) {
 		
@@ -43,6 +44,7 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 		this.add(addressInput);
 		this.add(portInput);
 		this.add(registerButton);
+		this.add(testButton);
 		
 		nameInput.setAlignmentX(Component.CENTER_ALIGNMENT);
 		addressInput.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -50,6 +52,7 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 		registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 		
 		registerButton.addActionListener(this);
+		testButton.addActionListener(this);
 	}
 
 	@Override
@@ -59,10 +62,16 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 				client.setName(nameInput.getText());
 				client.share();
 				this.window.setTitle(nameInput.getText());
-				this.window.setRegisteredView();
+				//this.window.setRegisteredView();
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
+		}
+		if(e.getSource() == testButton){
+			String[] keywords = new String[2];
+			keywords[0] = "file";
+			keywords[1] = "directory";
+			client.request(keywords, "text", "");
 		}
 	}
 

@@ -1,8 +1,10 @@
 package logic;
 import gui.ClientWindow;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -14,22 +16,25 @@ import java.util.LinkedList;
 import org.apache.tika.Tika;
 
 /*
- * Client Server Protocol
+ * Client-Server Protocol
  * ----------------------
  * 
  * MANDATORY PART
  * 
- * - A client registers at the server by sending a list of shared file names :
+ * - [IMPLEMENTED] A client registers at the server by sending a list of shared file names :
  * 		"register:filename1&filetype1,filename2&filetype2,...,filenameN&filetypeN:clientname"
  * 
- * - A client sends to the server a search request for a specific filename :
- * 		"request:filename"
+ * - [IMPLEMENTED] The server confirms the client is registered :
+ * 		"registered"
+ * 
+ * - A client sends to the server a search request for keywords, and optionnaly specify a file type or a client name :
+ * 		"request:keyword1,keyword2,...,keywordN:(type=filetype):(client=clientname)"
  * 
  * - The server replies to the requesting client by sending either a 'not found' message or addresses of client(s) sharing the requested file :
  * 		"reply:notfound"
- * 		"reply:address1@clientname1,address2@clientname2,...,addressN@clientnameN"
+ * 		"reply:found:filename1&filetype1,filename2&filetype2,...,filenameN&filetypeN" (more than one file match the request)
  * 
- * - The client unregisters at the server (when the client stops sharing files) :
+ * - [IMPLEMENTED] The client unregisters at the server (when the client stops sharing files) :
  * 		"unregister:clientname"
  * 
  * OPTIONAL PART
@@ -79,20 +84,24 @@ public class Client {
 	Tika tika = new Tika();
 	Socket clientSocket;
 	ClientWindow clientWindow;
+	PrintWriter wr;
+	private BufferedReader rd;
+
 
 	public Client(String sharedFilePath, String address, String port, String name) throws IOException {
 		this.sharedFilePath = sharedFilePath;
-		
+
 		this.setAddress(address);
-		
+
 		this.setPort(port);
-		
+
 		this.setName(name);
-		
+
 		getFileNames(fileNameList, sharedFilePath, "");
-		
+
 		clientWindow = new ClientWindow(this);
 		clientWindow.run();
+		
 	}
 
 
@@ -103,7 +112,7 @@ public class Client {
 
 		for(int i = 0; i < arrayFilesOrDirectories.length; i++){
 			if(arrayFilesOrDirectories[i].isFile() && ! arrayFilesOrDirectories[i].isHidden()){
-				String mediaType = tika.detect(arrayFilesOrDirectories[i]);
+				String mediaType = tika.detect(arrayFilesOrDirectories[i]).split("/")[0];
 				fileNameList.add(arrayFilesOrDirectories[i].getName() + "&" + mediaType);
 			}
 			else if(arrayFilesOrDirectories[i].isDirectory()){
@@ -119,6 +128,9 @@ public class Client {
 		try {
 			clientSocket = new Socket();
 			clientSocket.connect(new InetSocketAddress(address, Integer.parseInt(port)), 1000);
+			wr = new PrintWriter(clientSocket.getOutputStream());
+			rd = new BufferedReader( new InputStreamReader(clientSocket.getInputStream()));
+
 		} catch (SocketTimeoutException e) {
 			return false;
 		} catch (UnknownHostException e) {
@@ -136,8 +148,6 @@ public class Client {
 		if (! creationSocket()){
 			// TODO Generate a popup if the connexion failed
 		}
-		
-		PrintWriter wr = new PrintWriter(clientSocket.getOutputStream());
 		String registerMessage = "register:";
 		Iterator<String> it = fileNameList.iterator();
 		while(it.hasNext()){
@@ -148,16 +158,40 @@ public class Client {
 		registerMessage += ":"+getName();
 		wr.println(registerMessage);
 		wr.flush();
+		
+		String str = rd.readLine();
+		
+		System.out.println(str);
+
 	}
-	
+
 	public void unshare() throws IOException{
 
-		PrintWriter wr = new PrintWriter(clientSocket.getOutputStream());
 		String unregisterMessage = "unregister";
 		wr.println(unregisterMessage);
 		wr.flush();
 	}
 
+	public void request(String[] keywords, String fileType, String clientName){
+
+		String requestMessage = "request:";
+		for (String keyword : keywords){
+			requestMessage += keyword + ",";
+		}
+		requestMessage = requestMessage.substring(0, requestMessage.length() - 1);
+
+		if(! fileType.equals("")){
+			requestMessage+= ":type=" + fileType;
+		}
+		if(! clientName.equals("")){
+			requestMessage+= ":client=" + clientName;
+		}
+
+		wr.println(requestMessage);
+		wr.flush();
+
+		System.out.println(requestMessage);
+	}
 
 	public static void main(String[] args) throws IOException {
 
@@ -181,12 +215,12 @@ public class Client {
 		} else {
 			port = PORT;
 		}
-		
+
 		String name = null;
 		if (args.length > 3) {
 			name = args[3];
 		} else {
-			name = "Client " + Integer.toString((int) Math.ceil(Math.random()*100));
+			name = "Client " + Integer.toString((int) Math.ceil(Math.random()*1000));
 		}
 
 		new Client(sharedFilePath, address, port, name);

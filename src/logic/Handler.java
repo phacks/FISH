@@ -4,13 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Hashtable;
+import java.sql.Statement;
 
 
 public class Handler extends Thread{
@@ -24,9 +23,12 @@ public class Handler extends Thread{
 	PreparedStatement findClientStatement;
 	PreparedStatement unregisterClientStatement;
 	private PreparedStatement addFileStatement;
-	private PreparedStatement findFilesStatement;
+	private PreparedStatement findFilesFromClientNameStatement;
 	private PreparedStatement deleteFilesStatement;
 	String clientName;
+	private PreparedStatement findFilesFromKeywordsStatement;
+	private PreparedStatement findFilesFromFileTypeStatement;
+	private PreparedStatement countFilesFromKeywordsStatement;
 
 	Handler(Socket socket, Connection connection) throws IOException, SQLException { // thread constructor
 		this.socket = socket;
@@ -56,45 +58,131 @@ public class Handler extends Thread{
 					registerClient(clientName, address, port);
 
 					addFiles(clientName, parseFiles);
+					
+					wr.println("registered");
+					wr.flush();
 				}
-				
+
 				if (command.equals("unregister")){
 					deleteFiles(clientName);
 					unregisterClient(clientName);
+				}
+
+				if (command.equals("request")){
+					String[] keywords = parseCommand[1].split(",");
+
+					if (parseCommand.length == 2){
+						fileSearch(keywords, "", "");
+					}
+
+					else if(parseCommand.length == 3){
+						if (parseCommand[2].contains("type")){
+							String fileType = parseCommand[2].split("=")[1]; 
+
+							fileSearch(keywords, fileType, "");
+						}
+
+						else if (parseCommand[2].contains("client")){
+							String clientNameRequest = parseCommand[2].split("=")[1]; 
+
+							fileSearch(keywords, "", clientNameRequest);
+						}
+
+						else{
+							System.err.println("Request command not valid");
+						}
+					}
+
+					else if (parseCommand.length == 4){
+						String fileType = parseCommand[3].split("=")[1];
+						String clientNameRequest = parseCommand[4].split("=")[1];
+
+						fileSearch(keywords, fileType, clientNameRequest);
+					}
+
+					else{
+						System.err.println("Request command not valid");
+					}
 				}
 			}
 
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
+	}
+
+
+	private void fileSearch(String[] keywords, String fileType, String clientName) throws Exception {
+
+		String findStatement = "SELECT * FROM FILES WHERE FILENAME LIKE '%" + keywords[0] + "%'";
+
+		if (keywords.length > 1){
+			for (int i=1; i < keywords.length; i++){
+				findStatement += " INTERSECT SELECT * FROM FILES WHERE FILENAME LIKE '%" + keywords[i] + "%'";
+			}
+		}
+
+		if (! fileType.equals("")){
+			findStatement += " INTERSECT SELECT * FROM FILES WHERE TYPE = '" + fileType + "'";
+		}
+
+		if (! clientName.equals("")){
+			findStatement += " INTERSECT SELECT * FROM FILES WHERE CLIENTNAME = '" + clientName + "'";
+		}
+		
+		findFilesFromKeywordsStatement = connection.prepareStatement(findStatement);
+		ResultSet result = findFilesFromKeywordsStatement.executeQuery();
+
+
+		String reply = "reply:";
+
+		if (result.next()){
+
+			reply += "found:" + result.getString("FILENAME") + "&" + result.getString("TYPE") + ",";
+			while(result.next()){
+				reply += result.getString("FILENAME") + "&" + result.getString("TYPE") + ",";
+			}
+			reply = reply.substring(0, reply.length() - 1);
+		}
+		else{
+			reply += "notfound";
+		}
+
+		send(reply);
+	}
+
+
+	private void send(String message) {
+		
+		wr.println(message);
+		wr.flush();
+		
 	}
 
 	private void unregisterClient(String clientName2) throws SQLException {
 		unregisterClientStatement.setString(1, clientName);
 		int rows = unregisterClientStatement.executeUpdate();
 		if (rows > 0) {
-			System.out.println(rows);
+			//System.out.println(rows);
 		} else {
 			System.err.println("Error : " + clientName + " files could not be deleted");
 		}
 	}
 
 	private void deleteFiles(String clientName2) throws SQLException {
-		
+
 		deleteFilesStatement.setString(1, clientName);
 		int rows = deleteFilesStatement.executeUpdate();
 		if (rows > 0) {
-			System.out.println(rows);
+			//System.out.println(rows);
 		} else {
 			System.err.println("Error : " + clientName + " files could not be deleted");
 		}
-		
+
 	}
 
 	private void addFiles(String clientName, String[] parseFiles) throws SQLException {
@@ -102,7 +190,7 @@ public class Handler extends Thread{
 		for(String file : parseFiles){
 			String fileName = file.split("&")[0];
 			String fileType = file.split("&")[1];
-			
+
 			addFileStatement.setString(1, fileName);
 			addFileStatement.setString(2, fileType);
 			addFileStatement.setString(3, clientName);
@@ -151,7 +239,9 @@ public class Handler extends Thread{
 		unregisterClientStatement = connection.prepareStatement("DELETE FROM USERS WHERE CLIENTNAME = ?");
 
 		addFileStatement = connection.prepareStatement("INSERT INTO FILES (filename, type, clientname) VALUES (?, ?, ?)");
-		findFilesStatement = connection.prepareStatement("SELECT * from FILES WHERE CLIENTNAME = ?");
+		findFilesFromClientNameStatement = connection.prepareStatement("SELECT * from FILES WHERE CLIENTNAME = ?");
+		//findFilesFromKeywordStatement = connection.prepareStatement("SELECT * from FILES WHERE FILENAME = %?%");
+		//findFilesFromFileTypeStatement = connection.prepareStatement("SELECT * from FILES WHERE FILENAME = %?%");
 		deleteFilesStatement = connection.prepareStatement("DELETE FROM FILES WHERE CLIENTNAME = ?");
 	}
 

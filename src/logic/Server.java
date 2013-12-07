@@ -39,22 +39,14 @@ public class Server{
 
 	private Connection createDatasource() throws ClassNotFoundException, SQLException {
 		Connection connection = getConnection();
-		boolean exist = false;
-		int tableNameColumn = 3;
-		DatabaseMetaData dbm = connection.getMetaData();
-		for (ResultSet rs = dbm.getTables(null, null, null, null); rs.next();) {
-			if (rs.getString(tableNameColumn).equals("FILES")) {
-				exist = true;
-				rs.close();
-				break;
-			}
-		}
-		if (!exist) {
-			Statement statementFiles = connection.createStatement();
-			statementFiles.executeUpdate("CREATE TABLE FILES (id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), filename VARCHAR(64), type VARCHAR(64), clientname VARCHAR(64))");
-			Statement statementUsers = connection.createStatement();
-			statementUsers.executeUpdate("CREATE TABLE USERS (clientname VARCHAR(64) PRIMARY KEY, address VARCHAR(64), port INT)");
-		}
+
+		Statement statementFiles = connection.createStatement();
+		statementFiles.executeUpdate("DROP TABLE FILES");
+		statementFiles.executeUpdate("CREATE TABLE FILES (id INTEGER NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), filename VARCHAR(64), type VARCHAR(64), clientname VARCHAR(64))");
+		Statement statementUsers = connection.createStatement();
+		statementFiles.executeUpdate("DROP TABLE USERS");
+		statementUsers.executeUpdate("CREATE TABLE USERS (clientname VARCHAR(64) PRIMARY KEY, address VARCHAR(64), port INT)");
+
 		return connection;
 	}
 
