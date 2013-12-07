@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -24,7 +25,8 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 	private JButton unregister = new JButton("unregister");
 	private RegistrationPanel registrationPanel;
 	private SearchPanel searchPanel;
-	private ClientWindow clientWindow = this; 
+	private ClientWindow clientWindow = this;
+	private ResultsPanel resultsPanel; 
 
 	public ClientWindow(Client client) {
 
@@ -32,6 +34,7 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 
 		registrationPanel = new RegistrationPanel(client, this);
 		searchPanel = new SearchPanel(client, this);
+		resultsPanel = new ResultsPanel(client, this);
 
 		this.setLocationRelativeTo(null);
 
@@ -59,6 +62,7 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 	public void setRegisteredView(){
 		tabbedPane.removeAll();
 		tabbedPane.add("Search", searchPanel);
+		tabbedPane.add("Results", resultsPanel);
 
 		this.repaint();
 		this.revalidate();
@@ -68,6 +72,12 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 	public void run() {
 		this.setTitle(client.getName());
 		initializeMainPanel();
+	}
+	
+	public void resultsPanelSetRequestText(String request){
+		resultsPanel.setRequestText(request);
+		this.repaint();
+		this.revalidate();
 	}
 
 	@Override

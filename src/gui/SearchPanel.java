@@ -55,6 +55,10 @@ public class SearchPanel extends JPanel implements ActionListener{
 
 
 		keywordInput.setAlignmentX(Component.CENTER_ALIGNMENT);
+		all.setAlignmentX(Component.CENTER_ALIGNMENT);
+		text.setAlignmentX(Component.CENTER_ALIGNMENT);
+		image.setAlignmentX(Component.CENTER_ALIGNMENT);
+		audio.setAlignmentX(Component.CENTER_ALIGNMENT);
 		searchButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
 		searchButton.addActionListener(this);
@@ -77,6 +81,14 @@ public class SearchPanel extends JPanel implements ActionListener{
 			}
 			
 			client.request(keywords, fileType, "");
+			String requestText = "Keywords: ";
+			for (String keyword : keywords){
+				requestText += keyword + " ";
+			}
+			if (! fileType.equals(""))
+				requestText += "| File type: " + fileType;
+				
+			window.resultsPanelSetRequestText(requestText);
 		}
 
 	}

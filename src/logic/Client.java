@@ -32,7 +32,7 @@ import org.apache.tika.Tika;
  * 
  * - [IMPLEMENTED] The server replies to the requesting client by sending either a 'not found' message or addresses of client(s) sharing the requested file :
  * 		"reply:notfound"
- * 		"reply:found:filename1&filetype1,filename2&filetype2,...,filenameN&filetypeN" (more than one file match the request)
+ * 		"reply:found:filename1&filetype1&clientname1&address1,...,filenameN&filetypeN&clientnameN&addressN" (more than one file match the request)
  * 
  * - [IMPLEMENTED] The client unregisters at the server (when the client stops sharing files) :
  * 		"unregister:clientname"
@@ -86,6 +86,7 @@ public class Client {
 	ClientWindow clientWindow;
 	PrintWriter wr;
 	private BufferedReader rd;
+	ClientReader clientReader;
 
 
 	public Client(String sharedFilePath, String address, String port, String name) throws IOException {
@@ -145,9 +146,10 @@ public class Client {
 
 	public void share() throws IOException{
 
-		if (! creationSocket()){
-			// TODO Generate a popup if the connexion failed
-		}
+		creationSocket();
+		
+		new Thread(new ClientReader(this, clientWindow, rd)).start();
+		
 		String registerMessage = "register:";
 		Iterator<String> it = fileNameList.iterator();
 		while(it.hasNext()){
@@ -158,15 +160,6 @@ public class Client {
 		registerMessage += ":"+getName();
 		wr.println(registerMessage);
 		wr.flush();
-		
-		String str = rd.readLine();
-
-		if (str.equals("registered")){
-			clientWindow.setRegisteredView();
-		}
-		else{
-			System.err.println("Test");
-		}
 
 	}
 
@@ -194,8 +187,6 @@ public class Client {
 
 		wr.println(requestMessage);
 		wr.flush();
-
-		System.out.println(requestMessage);
 	}
 
 	public static void main(String[] args) throws IOException {

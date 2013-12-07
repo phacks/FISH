@@ -29,6 +29,8 @@ public class Handler extends Thread{
 	private PreparedStatement findFilesFromKeywordsStatement;
 	private PreparedStatement findFilesFromFileTypeStatement;
 	private PreparedStatement countFilesFromKeywordsStatement;
+	private PreparedStatement findFileStatement;
+	private PreparedStatement findFileOwnerStatement;
 
 	Handler(Socket socket, Connection connection) throws IOException, SQLException { // thread constructor
 		this.socket = socket;
@@ -58,7 +60,7 @@ public class Handler extends Thread{
 					registerClient(clientName, address, port);
 
 					addFiles(clientName, parseFiles);
-					
+
 					wr.println("registered");
 					wr.flush();
 				}
@@ -133,7 +135,7 @@ public class Handler extends Thread{
 		if (! clientName.equals("")){
 			findStatement += " INTERSECT SELECT * FROM FILES WHERE CLIENTNAME = '" + clientName + "'";
 		}
-		
+
 		findFilesFromKeywordsStatement = connection.prepareStatement(findStatement);
 		ResultSet result = findFilesFromKeywordsStatement.executeQuery();
 
@@ -142,9 +144,25 @@ public class Handler extends Thread{
 
 		if (result.next()){
 
-			reply += "found:" + result.getString("FILENAME") + "&" + result.getString("TYPE") + ",";
+			findClientStatement.setString(1, result.getString("CLIENTNAME"));
+			ResultSet resultAddress = findClientStatement.executeQuery();
+
+			String ownerAddress = "";
+
+			resultAddress.next();
+			ownerAddress = resultAddress.getString("ADDRESS");
+
+
+			reply += "found:" + result.getString("FILENAME") + "&" + result.getString("TYPE") + "&" + result.getString("CLIENTNAME") + "&" + ownerAddress + ",";
 			while(result.next()){
-				reply += result.getString("FILENAME") + "&" + result.getString("TYPE") + ",";
+
+				findClientStatement.setString(1, result.getString("CLIENTNAME"));
+				resultAddress = findClientStatement.executeQuery();
+
+				resultAddress.next();
+				ownerAddress = resultAddress.getString("ADDRESS");
+
+				reply += result.getString("FILENAME") + "&" + result.getString("TYPE") + "&" + result.getString("CLIENTNAME") + "&" + ownerAddress + ",";
 			}
 			reply = reply.substring(0, reply.length() - 1);
 		}
@@ -153,16 +171,14 @@ public class Handler extends Thread{
 		}
 
 		send(reply);
-		
-		System.out.println(reply);
 	}
 
 
 	private void send(String message) {
-		
+
 		wr.println(message);
 		wr.flush();
-		
+
 	}
 
 	private void unregisterClient(String clientName2) throws SQLException {
@@ -242,7 +258,7 @@ public class Handler extends Thread{
 
 		addFileStatement = connection.prepareStatement("INSERT INTO FILES (filename, type, clientname) VALUES (?, ?, ?)");
 		findFilesFromClientNameStatement = connection.prepareStatement("SELECT * from FILES WHERE CLIENTNAME = ?");
-		//findFilesFromKeywordStatement = connection.prepareStatement("SELECT * from FILES WHERE FILENAME = %?%");
+		findFileOwnerStatement = connection.prepareStatement("SELECT CLIENTNAME from FILES WHERE FILENAME = ?");
 		//findFilesFromFileTypeStatement = connection.prepareStatement("SELECT * from FILES WHERE FILENAME = %?%");
 		deleteFilesStatement = connection.prepareStatement("DELETE FROM FILES WHERE CLIENTNAME = ?");
 	}

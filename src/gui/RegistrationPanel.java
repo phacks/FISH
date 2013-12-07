@@ -44,7 +44,6 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 		this.add(addressInput);
 		this.add(portInput);
 		this.add(registerButton);
-		this.add(testButton);
 		
 		nameInput.setAlignmentX(Component.CENTER_ALIGNMENT);
 		addressInput.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -52,7 +51,6 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 		registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 		
 		registerButton.addActionListener(this);
-		testButton.addActionListener(this);
 	}
 
 	@Override
@@ -66,12 +64,6 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-		}
-		if(e.getSource() == testButton){
-			String[] keywords = new String[2];
-			keywords[0] = "file";
-			keywords[1] = "directory";
-			client.request(keywords, "text", "");
 		}
 	}
 
