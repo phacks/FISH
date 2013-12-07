@@ -27,10 +27,10 @@ import org.apache.tika.Tika;
  * - [IMPLEMENTED] The server confirms the client is registered :
  * 		"registered"
  * 
- * - A client sends to the server a search request for keywords, and optionnaly specify a file type or a client name :
+ * - [IMPLEMENTED] A client sends to the server a search request for keywords, and optionnaly specify a file type or a client name :
  * 		"request:keyword1,keyword2,...,keywordN:(type=filetype):(client=clientname)"
  * 
- * - The server replies to the requesting client by sending either a 'not found' message or addresses of client(s) sharing the requested file :
+ * - [IMPLEMENTED] The server replies to the requesting client by sending either a 'not found' message or addresses of client(s) sharing the requested file :
  * 		"reply:notfound"
  * 		"reply:found:filename1&filetype1,filename2&filetype2,...,filenameN&filetypeN" (more than one file match the request)
  * 
@@ -160,8 +160,13 @@ public class Client {
 		wr.flush();
 		
 		String str = rd.readLine();
-		
-		System.out.println(str);
+
+		if (str.equals("registered")){
+			clientWindow.setRegisteredView();
+		}
+		else{
+			System.err.println("Test");
+		}
 
 	}
 

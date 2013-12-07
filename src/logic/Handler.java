@@ -153,6 +153,8 @@ public class Handler extends Thread{
 		}
 
 		send(reply);
+		
+		System.out.println(reply);
 	}
 
 
