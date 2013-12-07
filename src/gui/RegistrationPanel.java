@@ -19,6 +19,7 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 	private JTextField nameInput = new JTextField("", 20);
 	private JTextField addressInput = new JTextField("", 20);
 	private JTextField portInput = new JTextField("", 20);
+	private JTextField downloadPortInput = new JTextField("", 20);
 	private JButton registerButton = new JButton("Register");
 	private Client client;
 	private ClientWindow window;
@@ -32,10 +33,13 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 		nameInput.setMaximumSize(new Dimension(250,nameInput.getPreferredSize().height));
 		addressInput.setMaximumSize(new Dimension(250,addressInput.getPreferredSize().height));
 		portInput.setMaximumSize(new Dimension(250,portInput.getPreferredSize().height));
+		
+		downloadPortInput.setMaximumSize(new Dimension(250,portInput.getPreferredSize().height));
 				
 		nameInput.setText(client.getName());
 		addressInput.setText(client.getAddress());
 		portInput.setText(client.getPort());
+		downloadPortInput.setText(client.getDownloadPort());
 		
 		this.setPreferredSize(new Dimension(600, 500));
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -43,11 +47,13 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 		this.add(nameInput);
 		this.add(addressInput);
 		this.add(portInput);
+		this.add(downloadPortInput);
 		this.add(registerButton);
 		
 		nameInput.setAlignmentX(Component.CENTER_ALIGNMENT);
 		addressInput.setAlignmentX(Component.CENTER_ALIGNMENT);
 		portInput.setAlignmentX(Component.CENTER_ALIGNMENT);
+		downloadPortInput.setAlignmentX(Component.CENTER_ALIGNMENT);
 		registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 		
 		registerButton.addActionListener(this);
@@ -58,6 +64,9 @@ public class RegistrationPanel extends JPanel implements ActionListener{
 		if(e.getSource() == registerButton){
 			try {
 				client.setName(nameInput.getText());
+				client.setAddress(addressInput.getText());
+				client.setPort(portInput.getText());
+				client.setDownloadPort(downloadPortInput.getText());
 				client.share();
 				this.window.setTitle(nameInput.getText());
 				//this.window.setRegisteredView();

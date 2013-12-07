@@ -55,9 +55,9 @@ public class Handler extends Thread{
 					clientName = parseCommand[2];
 
 					String address = socket.getInetAddress().getHostAddress();
-					int port = socket.getPort();
+					int downloadPort = Integer.parseInt(parseCommand[3]);
 
-					registerClient(clientName, address, port);
+					registerClient(clientName, address, downloadPort);
 
 					addFiles(clientName, parseFiles);
 
@@ -120,16 +120,16 @@ public class Handler extends Thread{
 
 	private void fileSearch(String[] keywords, String fileType, String clientName) throws Exception {
 
-		String findStatement = "SELECT * FROM FILES WHERE FILENAME LIKE '%" + keywords[0] + "%'";
+		String findStatement = "SELECT * FROM FILES WHERE FILENAME LIKE '%" + keywords[0] + "%' AND CLIENTNAME != '" + this.clientName + "'";
 
 		if (keywords.length > 1){
 			for (int i=1; i < keywords.length; i++){
-				findStatement += " INTERSECT SELECT * FROM FILES WHERE FILENAME LIKE '%" + keywords[i] + "%'";
+				findStatement += " INTERSECT SELECT * FROM FILES WHERE FILENAME LIKE '%" + keywords[i] + "%' AND CLIENTNAME != '" + this.clientName + "'";
 			}
 		}
 
 		if (! fileType.equals("")){
-			findStatement += " INTERSECT SELECT * FROM FILES WHERE TYPE = '" + fileType + "'";
+			findStatement += " INTERSECT SELECT * FROM FILES WHERE TYPE = '" + fileType + "' AND CLIENTNAME != '" + this.clientName + "'";
 		}
 
 		if (! clientName.equals("")){
@@ -148,12 +148,14 @@ public class Handler extends Thread{
 			ResultSet resultAddress = findClientStatement.executeQuery();
 
 			String ownerAddress = "";
+			int ownerDownloadPort;
 
 			resultAddress.next();
 			ownerAddress = resultAddress.getString("ADDRESS");
+			ownerDownloadPort = resultAddress.getInt("PORT");
 
 
-			reply += "found:" + result.getString("FILENAME") + "&" + result.getString("TYPE") + "&" + result.getString("CLIENTNAME") + "&" + ownerAddress + ",";
+			reply += "found:" + result.getString("FILENAME") + "&" + result.getString("TYPE") + "&" + result.getString("CLIENTNAME") + "&" + ownerAddress + "&" + ownerDownloadPort + ",";
 			while(result.next()){
 
 				findClientStatement.setString(1, result.getString("CLIENTNAME"));
@@ -161,8 +163,9 @@ public class Handler extends Thread{
 
 				resultAddress.next();
 				ownerAddress = resultAddress.getString("ADDRESS");
-
-				reply += result.getString("FILENAME") + "&" + result.getString("TYPE") + "&" + result.getString("CLIENTNAME") + "&" + ownerAddress + ",";
+				ownerDownloadPort = resultAddress.getInt("PORT");
+				
+				reply += result.getString("FILENAME") + "&" + result.getString("TYPE") + "&" + result.getString("CLIENTNAME") + "&" + ownerAddress + "&" + ownerDownloadPort + ",";
 			}
 			reply = reply.substring(0, reply.length() - 1);
 		}
@@ -223,7 +226,7 @@ public class Handler extends Thread{
 	}
 
 
-	private void registerClient(String clientName, String address, int port) throws Exception {
+	private void registerClient(String clientName, String address, int downloadPort) throws Exception {
 		findClientStatement.setString(1, clientName);
 
 		ResultSet result = null;
@@ -238,7 +241,7 @@ public class Handler extends Thread{
 
 			registerClientStatement.setString(1, clientName);
 			registerClientStatement.setString(2, address);
-			registerClientStatement.setInt(3, port);
+			registerClientStatement.setInt(3, downloadPort);
 
 
 

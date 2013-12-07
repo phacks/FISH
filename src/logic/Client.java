@@ -22,7 +22,7 @@ import org.apache.tika.Tika;
  * MANDATORY PART
  * 
  * - [IMPLEMENTED] A client registers at the server by sending a list of shared file names :
- * 		"register:filename1&filetype1,filename2&filetype2,...,filenameN&filetypeN:clientname"
+ * 		"register:filename1&filetype1,filename2&filetype2,...,filenameN&filetypeN:clientname:downloadport"
  * 
  * - [IMPLEMENTED] The server confirms the client is registered :
  * 		"registered"
@@ -32,7 +32,7 @@ import org.apache.tika.Tika;
  * 
  * - [IMPLEMENTED] The server replies to the requesting client by sending either a 'not found' message or addresses of client(s) sharing the requested file :
  * 		"reply:notfound"
- * 		"reply:found:filename1&filetype1&clientname1&address1,...,filenameN&filetypeN&clientnameN&addressN" (more than one file match the request)
+ * 		"reply:found:filename1&filetype1&clientname1&address1&downloadport1,...,filenameN&filetypeN&clientnameN&addressN&downloadportN" (more than one file match the request)
  * 
  * - [IMPLEMENTED] The client unregisters at the server (when the client stops sharing files) :
  * 		"unregister:clientname"
@@ -80,6 +80,7 @@ public class Client {
 	private String address;
 	private String port;
 	private String name;
+	private String downloadPort;
 	LinkedList<String> fileNameList = new LinkedList<String>();
 	Tika tika = new Tika();
 	Socket clientSocket;
@@ -89,7 +90,7 @@ public class Client {
 	ClientReader clientReader;
 
 
-	public Client(String sharedFilePath, String address, String port, String name) throws IOException {
+	public Client(String sharedFilePath, String address, String port, String name, String downloadPort) throws IOException {
 		this.sharedFilePath = sharedFilePath;
 
 		this.setAddress(address);
@@ -97,6 +98,8 @@ public class Client {
 		this.setPort(port);
 
 		this.setName(name);
+		
+		this.setDownloadPort(downloadPort);
 
 		getFileNames(fileNameList, sharedFilePath, "");
 
@@ -158,6 +161,7 @@ public class Client {
 		}
 		registerMessage = registerMessage.substring(0, registerMessage.length() - 1);
 		registerMessage += ":"+getName();
+		registerMessage += ":"+getDownloadPort();
 		wr.println(registerMessage);
 		wr.flush();
 
@@ -200,26 +204,33 @@ public class Client {
 
 		String address = null;
 		if (args.length > 1) {
-			address = args[1];
+			address = args[0];
 		} else {
 			address = ADDRESS;
 		}
 
 		String port = null;
 		if (args.length > 2) {
-			port = args[2];
+			port = args[1];
 		} else {
 			port = PORT;
 		}
 
 		String name = null;
 		if (args.length > 3) {
-			name = args[3];
+			name = args[2];
 		} else {
 			name = "Client " + Integer.toString((int) Math.ceil(Math.random()*1000));
 		}
+		
+		String downloadPort = null;
+		if (args.length > 4) {
+			downloadPort = args[3];
+		} else {
+			downloadPort = "10001";
+		}
 
-		new Client(sharedFilePath, address, port, name);
+		new Client(sharedFilePath, address, port, name, downloadPort);
 
 	}
 
@@ -248,6 +259,15 @@ public class Client {
 
 	public void setPort(String port) {
 		this.port = port;
+	}
+
+	public String getDownloadPort() {
+		return downloadPort;
+	}
+
+
+	public void setDownloadPort(String downloadPort) {
+		this.downloadPort = downloadPort;
 	}
 
 	public static final String SHAREDFILEPATH = "shared/";

@@ -26,7 +26,13 @@ public class ClientReader implements Runnable {
 					clientWindow.setRegisteredView();
 				}
 				if (str.startsWith("reply:")){
-					System.out.println(str);
+					String[] command = str.split(":");
+					if (command[1].equals("notfound")){
+						clientWindow.setResultsNotFound();
+					}
+					else if(command[1].equals("found")){
+						clientWindow.setResults(command[2]);
+					}
 				}
 			}
 		} catch (IOException e) {
