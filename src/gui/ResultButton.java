@@ -16,6 +16,7 @@ public class ResultButton extends JButton implements ActionListener{
 	private int port;
 	private Client client;
 	private String name;
+	private String type;
 
 	public ResultButton(Client client, String name, String type, String clientName, String address, int port) {
 		super(name + " - " + type + " @ " + clientName);
@@ -31,6 +32,7 @@ public class ResultButton extends JButton implements ActionListener{
         this.address = address;
         this.port = port;
         this.client = client;
+        this.type = type;
         
         this.addActionListener(this);
 	}
@@ -38,7 +40,7 @@ public class ResultButton extends JButton implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == this){
-			client.download(name, address, Integer.toString(port));
+			client.download(name + "&" + type, address, Integer.toString(port));
 		}
 	}
 

@@ -164,7 +164,7 @@ public class Handler extends Thread{
 				resultAddress.next();
 				ownerAddress = resultAddress.getString("ADDRESS");
 				ownerDownloadPort = resultAddress.getInt("PORT");
-				
+
 				reply += result.getString("FILENAME") + "&" + result.getString("TYPE") + "&" + result.getString("CLIENTNAME") + "&" + ownerAddress + "&" + ownerDownloadPort + ",";
 			}
 			reply = reply.substring(0, reply.length() - 1);
@@ -209,18 +209,20 @@ public class Handler extends Thread{
 	private void addFiles(String clientName, String[] parseFiles) throws SQLException {
 
 		for(String file : parseFiles){
-			String fileName = file.split("&")[0];
-			String fileType = file.split("&")[1];
+			if (! file.equals("")){
+				String fileName = file.split("&")[0];
+				String fileType = file.split("&")[1];
 
-			addFileStatement.setString(1, fileName);
-			addFileStatement.setString(2, fileType);
-			addFileStatement.setString(3, clientName);
+				addFileStatement.setString(1, fileName);
+				addFileStatement.setString(2, fileType);
+				addFileStatement.setString(3, clientName);
 
-			int rows = addFileStatement.executeUpdate();
-			if (rows == 1) {
-				// System.out.println(clientName + " has been registered");
-			} else {
-				System.err.println("Error : " + clientName + " could not be registered");
+				int rows = addFileStatement.executeUpdate();
+				if (rows == 1) {
+					// System.out.println(clientName + " has been registered");
+				} else {
+					System.err.println("Error : " + clientName + " could not be registered");
+				}
 			}
 		}
 	}

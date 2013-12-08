@@ -3,6 +3,8 @@ package logic;
 import gui.ClientWindow;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class ClientReader implements Runnable {
@@ -33,6 +35,23 @@ public class ClientReader implements Runnable {
 					else if(command[1].equals("found")){
 						clientWindow.setResults(command[2]);
 					}
+				}
+				if (str.startsWith("download:")){
+					String fileName = str.split(":")[1];
+					int fileSize = Integer.parseInt(str.split(":")[2]);
+					System.out.println("Downloading " + fileName + ", size : " + fileSize + " bytes" );
+					
+					File newFile = new File(client.getSharedFilePath(), fileName);
+					FileOutputStream fos = new FileOutputStream(newFile);
+					
+					int content;
+					while ((content = rd.read()) != -1){
+						fos.write(content);
+					}
+					fos.close();
+					System.out.println("Download completed");
+					
+					client.downloadSocket.close();
 				}
 			}
 		} catch (IOException e) {

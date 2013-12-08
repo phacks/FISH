@@ -10,8 +10,10 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 import org.apache.tika.Tika;
 
@@ -41,7 +43,7 @@ import org.apache.tika.Tika;
  * 		"download:filename"
  * 
  * - The other client gives the size of the file, and start sending out the file bytes :
- * 		"download:filesize\nfilebytes" (\n stands for a new line)
+ * 		"download:filename:filesize\nfilebytes" (\n stands for a new line)
  * 
  * OPTIONAL PART
  * 
@@ -82,12 +84,12 @@ import org.apache.tika.Tika;
 
 public class Client {
 
-	String sharedFilePath;
+	private String sharedFilePath;
 	private String address;
 	private String port;
 	private String name;
 	private String downloadPort;
-	LinkedList<String> fileNameList = new LinkedList<String>();
+	HashMap<String, String> filesList = new HashMap<String, String>();
 	Tika tika = new Tika();
 	Socket clientSocket;
 	ClientWindow clientWindow;
@@ -95,10 +97,11 @@ public class Client {
 	private BufferedReader rd;
 	ClientReader clientReader;
 	ClientServer clientServer;
+	Socket downloadSocket;
 
 
 	public Client(String sharedFilePath, String address, String port, String name, String downloadPort) throws IOException {
-		this.sharedFilePath = sharedFilePath;
+		this.setSharedFilePath(sharedFilePath);
 
 		this.setAddress(address);
 
@@ -108,15 +111,13 @@ public class Client {
 		
 		this.setDownloadPort(downloadPort);
 
-		getFileNames(fileNameList, sharedFilePath, "");
-
 		clientWindow = new ClientWindow(this);
 		clientWindow.run();
 		
 	}
 
 
-	private void getFileNames(LinkedList<String> fileNameList, String sharedFilePath, String pathPrefix) throws IOException {
+	private void getFileNames(HashMap<String, String> fileNameList, String sharedFilePath, String pathPrefix) throws IOException {
 
 		File file = new File(sharedFilePath);
 		File[] arrayFilesOrDirectories = file.listFiles();
@@ -124,7 +125,7 @@ public class Client {
 		for(int i = 0; i < arrayFilesOrDirectories.length; i++){
 			if(arrayFilesOrDirectories[i].isFile() && ! arrayFilesOrDirectories[i].isHidden()){
 				String mediaType = tika.detect(arrayFilesOrDirectories[i]).split("/")[0];
-				fileNameList.add(arrayFilesOrDirectories[i].getName() + "&" + mediaType);
+				filesList.put(arrayFilesOrDirectories[i].getName() + "&" + mediaType, pathPrefix);
 			}
 			else if(arrayFilesOrDirectories[i].isDirectory()){
 				String directoryPath = arrayFilesOrDirectories[i].getPath();
@@ -132,6 +133,10 @@ public class Client {
 			}
 		}
 
+	}
+	
+	public String findPathToFile(String fileNameAndType){
+		return filesList.get(fileNameAndType);
 	}
 
 	private boolean creationSocket(){
@@ -155,6 +160,8 @@ public class Client {
 	}
 
 	public void share() throws IOException{
+		
+		getFileNames(filesList, sharedFilePath, "");
 
 		creationSocket();
 		
@@ -164,11 +171,17 @@ public class Client {
 		new Thread(new ClientReader(this, clientWindow, rd)).start();
 		
 		String registerMessage = "register:";
-		Iterator<String> it = fileNameList.iterator();
-		while(it.hasNext()){
-			String s = it.next();
-			registerMessage += s+",";
+		//Iterator<String> it = filesList.iterator();
+		if(filesList.size() == 0){
+			registerMessage += " ";
 		}
+		for(Entry<String, String> entry : filesList.entrySet()){
+			registerMessage += entry.getKey() +",";
+		}
+//		while(it.hasNext()){
+//			String s = it.next();
+//			registerMessage += s+",";
+//		}
 		registerMessage = registerMessage.substring(0, registerMessage.length() - 1);
 		registerMessage += ":"+getName();
 		registerMessage += ":"+getDownloadPort();
@@ -207,13 +220,12 @@ public class Client {
 	
 	public void download(String fileName, String address, String downloadPort){
 		
-		System.out.println("Download method called");
 		PrintWriter dwr = null;
 		BufferedReader drd = null;
 		
 		// Creates the socket to the client that has the requested file
 		try {
-			Socket downloadSocket = new Socket();
+			downloadSocket = new Socket();
 			downloadSocket.connect(new InetSocketAddress(address, Integer.parseInt(downloadPort)), 1000);
 			dwr = new PrintWriter(downloadSocket.getOutputStream());
 			drd = new BufferedReader( new InputStreamReader(downloadSocket.getInputStream()));
@@ -227,7 +239,7 @@ public class Client {
 		
 		new Thread(new ClientReader(this, clientWindow, drd)).start();
 		
-		dwr.println("Trying to connect...");
+		dwr.println("download:" + fileName);
 		dwr.flush();
 		
 	}
@@ -307,6 +319,15 @@ public class Client {
 
 	public void setDownloadPort(String downloadPort) {
 		this.downloadPort = downloadPort;
+	}
+
+	public String getSharedFilePath() {
+		return sharedFilePath;
+	}
+
+
+	public void setSharedFilePath(String sharedFilePath) {
+		this.sharedFilePath = sharedFilePath;
 	}
 
 	public static final String SHAREDFILEPATH = "shared/";

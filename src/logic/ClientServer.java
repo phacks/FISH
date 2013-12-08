@@ -12,6 +12,7 @@ public class ClientServer implements Runnable {
 	public ClientServer(Client client, String downloadPort) {
 		try {
 			this.serverSocket = new ServerSocket(Integer.parseInt(downloadPort));
+			this.client = client;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -23,7 +24,7 @@ public class ClientServer implements Runnable {
 			Socket socket;
 			try {
 				socket = this.serverSocket.accept();
-				ClientHandler clientHandler =  new ClientHandler(socket);
+				ClientHandler clientHandler =  new ClientHandler(socket, client);
 				clientHandler.setPriority( clientHandler.getPriority() + 1 );
 				clientHandler.start();
 			} catch (IOException e) {
