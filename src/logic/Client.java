@@ -37,6 +37,12 @@ import org.apache.tika.Tika;
  * - [IMPLEMENTED] The client unregisters at the server (when the client stops sharing files) :
  * 		"unregister:clientname"
  * 
+ * - A client asks a specific file to another client for downloading it
+ * 		"download:filename"
+ * 
+ * - The other client gives the size of the file, and start sending out the file bytes :
+ * 		"download:filesize\nfilebytes" (\n stands for a new line)
+ * 
  * OPTIONAL PART
  * 
  * - A client asks the server the number of files shared :
@@ -88,6 +94,7 @@ public class Client {
 	PrintWriter wr;
 	private BufferedReader rd;
 	ClientReader clientReader;
+	ClientServer clientServer;
 
 
 	public Client(String sharedFilePath, String address, String port, String name, String downloadPort) throws IOException {
@@ -151,6 +158,9 @@ public class Client {
 
 		creationSocket();
 		
+		clientServer = new ClientServer(this, getDownloadPort());
+		new Thread(clientServer).start();
+
 		new Thread(new ClientReader(this, clientWindow, rd)).start();
 		
 		String registerMessage = "register:";
@@ -164,7 +174,6 @@ public class Client {
 		registerMessage += ":"+getDownloadPort();
 		wr.println(registerMessage);
 		wr.flush();
-
 	}
 
 	public void unshare() throws IOException{
@@ -172,6 +181,9 @@ public class Client {
 		String unregisterMessage = "unregister";
 		wr.println(unregisterMessage);
 		wr.flush();
+		
+		clientServer.closeSocket();
+		clientSocket.close();
 	}
 
 	public void request(String[] keywords, String fileType, String clientName){
@@ -191,6 +203,33 @@ public class Client {
 
 		wr.println(requestMessage);
 		wr.flush();
+	}
+	
+	public void download(String fileName, String address, String downloadPort){
+		
+		System.out.println("Download method called");
+		PrintWriter dwr = null;
+		BufferedReader drd = null;
+		
+		// Creates the socket to the client that has the requested file
+		try {
+			Socket downloadSocket = new Socket();
+			downloadSocket.connect(new InetSocketAddress(address, Integer.parseInt(downloadPort)), 1000);
+			dwr = new PrintWriter(downloadSocket.getOutputStream());
+			drd = new BufferedReader( new InputStreamReader(downloadSocket.getInputStream()));
+		} catch (SocketTimeoutException e) {
+			System.err.println(e);
+		} catch (UnknownHostException e) {
+			System.err.println(e);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		new Thread(new ClientReader(this, clientWindow, drd)).start();
+		
+		dwr.println("Trying to connect...");
+		dwr.flush();
+		
 	}
 
 	public static void main(String[] args) throws IOException {

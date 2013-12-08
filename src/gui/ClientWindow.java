@@ -103,9 +103,8 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 		public void windowClosing(WindowEvent e) {
 			try {
 				client.unshare();
-				clientWindow.dispose();
+				System.exit(0);
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			

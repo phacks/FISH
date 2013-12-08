@@ -54,7 +54,7 @@ public class Handler extends Thread{
 					String[] parseFiles = parseCommand[1].split(",");
 					clientName = parseCommand[2];
 
-					String address = socket.getInetAddress().getHostAddress();
+					String address = socket.getRemoteSocketAddress().toString().split(":")[0].substring(1);
 					int downloadPort = Integer.parseInt(parseCommand[3]);
 
 					registerClient(clientName, address, downloadPort);
