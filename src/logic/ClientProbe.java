@@ -12,6 +12,7 @@ public class ClientProbe implements Runnable{
 	String sharedFilePath;
 	Client client;
 	HashMap<String, Boolean> filesMap = new HashMap<String, Boolean>(); // If the boolean denotes the presence of the file in the shared folder
+	private final int UPDATE_TIME = 5000;
 	
 	Tika tika = new Tika();
 
@@ -25,7 +26,7 @@ public class ClientProbe implements Runnable{
 	public void run() {
 		while(true){
 			try {
-				Thread.sleep(5000);
+				Thread.sleep(UPDATE_TIME);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

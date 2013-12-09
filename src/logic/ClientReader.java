@@ -39,7 +39,6 @@ public class ClientReader implements Runnable {
 				if (str.startsWith("download:")){
 					String fileName = str.split(":")[1];
 					int fileSize = Integer.parseInt(str.split(":")[2]);
-					System.out.println("Downloading " + fileName + ", size : " + fileSize + " bytes" );
 					
 					clientWindow.initializeDownload(fileName, fileSize);
 					
@@ -54,9 +53,7 @@ public class ClientReader implements Runnable {
 						clientWindow.updateDownload(fileName, n);
 					}
 					fos.close();
-					System.out.println("Download completed");
-					
-					client.downloadSocket.close();
+					break;
 				}
 				if(str.startsWith("isavailable")){
 					String isAvailable = str.split(":")[1];
@@ -70,7 +67,9 @@ public class ClientReader implements Runnable {
 					}
 				}
 			}
+			client.downloadSocket.close();
 		} catch (IOException e) {
+			e.printStackTrace();
 		}
 
 	}

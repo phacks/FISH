@@ -217,8 +217,6 @@ public class Client {
 	public void request(String[] keywords, String fileType, String clientName){
 
 		String requestMessage = "request:";
-		System.out.println(keywords[0]);
-		System.out.println(keywords);
 		if (keywords[0].length() == 0 && keywords.length == 1){
 			requestMessage += " ";
 		}

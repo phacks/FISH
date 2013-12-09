@@ -45,18 +45,21 @@ public class ClientHandler extends Thread {
 							wr.print((char)content);
 						}
 						wr.flush();
-						socket.close();
 						break;
 
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
-//				
-//				if(str.startsWith("isavailable:")){
-//					
-//				}
+				
+				if(str.equals("ping")){
+					wr.println("pong");
+					wr.flush();
+					break;
+				}
 			}
+			
+			socket.close();
 
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -22,11 +22,14 @@ public class Server{
 	public static final String TABLE_NAME = "FILES";
 	public static final String DATASOURCE = "Database";
 	Connection connection;
+	ClientFailureDetector clientFailureDetector;
 
 	public Server(int host) throws IOException, ClassNotFoundException, SQLException{
 
 		this.host = host;
 		connection = createDatasource();
+		clientFailureDetector = new ClientFailureDetector(connection);
+		new Thread(clientFailureDetector).start();
 
 		try {
 			this.serverSocket = new ServerSocket(host);
