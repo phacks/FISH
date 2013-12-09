@@ -23,14 +23,10 @@ public class Handler extends Thread{
 	PreparedStatement findClientStatement;
 	PreparedStatement unregisterClientStatement;
 	private PreparedStatement addFileStatement;
-	private PreparedStatement findFilesFromClientNameStatement;
 	private PreparedStatement deleteFilesStatement;
 	String clientName;
 	private PreparedStatement findFilesFromKeywordsStatement;
-	private PreparedStatement findFilesFromFileTypeStatement;
-	private PreparedStatement countFilesFromKeywordsStatement;
-	private PreparedStatement findFileStatement;
-	private PreparedStatement findFileOwnerStatement;
+	private PreparedStatement deleteFileStatement;
 
 	Handler(Socket socket, Connection connection) throws IOException, SQLException { // thread constructor
 		this.socket = socket;
@@ -49,7 +45,6 @@ public class Handler extends Thread{
 			while ((str = rd.readLine()) != null){
 				String[] parseCommand = str.split(":");
 				String command = parseCommand[0];
-				System.out.println(str);
 
 				if (command.equals("register")){
 					String[] parseFiles = parseCommand[1].split(",");
@@ -74,7 +69,6 @@ public class Handler extends Thread{
 				if (command.equals("request")){
 					String[] keywords;
 					if (parseCommand[1].equals(" ")){
-						System.out.println("OK");
 						keywords = new String[1];
 						keywords[0] = ""; 
 					}
@@ -115,6 +109,17 @@ public class Handler extends Thread{
 						System.err.println("Request command not valid");
 					}
 				}
+
+				if (command.equals("addfile")){
+					String fileName = str.split(":")[1].split("&")[0];
+					String fileType = str.split(":")[1].split("&")[1];
+					addFile(fileName, fileType);
+				}
+
+				if (command.equals("deletefile")){
+					String fileName = str.split(":")[1].split("&")[0];
+					deleteFile(fileName);
+				}
 			}
 
 
@@ -126,6 +131,34 @@ public class Handler extends Thread{
 
 	}
 
+
+	private void addFile(String fileName, String fileType) throws SQLException {
+
+		addFileStatement.setString(1, fileName);
+		addFileStatement.setString(2, fileType);
+		addFileStatement.setString(3, clientName);
+
+		int rows = addFileStatement.executeUpdate();
+		if (rows == 1) {
+			System.out.println("File " + fileName + " from " + clientName + " has been added to the nameserver");
+		} else {
+			System.err.println("File " + fileName + " from " + clientName + " cannot be added to the nameserver");
+		}
+
+	}
+	
+	private void deleteFile(String fileName) throws SQLException {
+
+		deleteFileStatement.setString(1, clientName);
+		deleteFileStatement.setString(1, fileName);
+		int rows = deleteFilesStatement.executeUpdate();
+		if (rows > 0) {
+			System.out.println("File " + fileName + " from " + clientName + " has been deleted from the nameserver");
+		} else {
+			System.err.println("File " + fileName + " from " + clientName + " cannot be be deleted from the nameserver");
+		}
+
+	}
 
 	private void fileSearch(String[] keywords, String fileType, String clientName) throws Exception {
 
@@ -197,9 +230,9 @@ public class Handler extends Thread{
 		unregisterClientStatement.setString(1, clientName);
 		int rows = unregisterClientStatement.executeUpdate();
 		if (rows > 0) {
-			//System.out.println(rows);
+			System.out.println(clientName + " has been unregistered");
 		} else {
-			System.err.println("Error : " + clientName + " files could not be deleted");
+			System.err.println("Error : " + clientName + " cannot be unregistered");
 		}
 	}
 
@@ -208,7 +241,7 @@ public class Handler extends Thread{
 		deleteFilesStatement.setString(1, clientName);
 		int rows = deleteFilesStatement.executeUpdate();
 		if (rows > 0) {
-			//System.out.println(rows);
+			// System.out.println(clientName + " has been unregistered");
 		} else {
 			System.err.println("Error : " + clientName + " files could not be deleted");
 		}
@@ -230,7 +263,7 @@ public class Handler extends Thread{
 				if (rows == 1) {
 					// System.out.println(clientName + " has been registered");
 				} else {
-					System.err.println("Error : " + clientName + " could not be registered");
+					System.err.println("Error : " + clientName + " files cannot be added");
 				}
 			}
 		}
@@ -244,7 +277,6 @@ public class Handler extends Thread{
 		result = findClientStatement.executeQuery();
 
 		if (result.next()) {
-			// account exists, instantiate, put in cache and throw exception.
 			throw new Exception("Error : " + clientName + " is already registered");
 		}
 		else{
@@ -271,9 +303,7 @@ public class Handler extends Thread{
 		unregisterClientStatement = connection.prepareStatement("DELETE FROM USERS WHERE CLIENTNAME = ?");
 
 		addFileStatement = connection.prepareStatement("INSERT INTO FILES (filename, type, clientname) VALUES (?, ?, ?)");
-		findFilesFromClientNameStatement = connection.prepareStatement("SELECT * from FILES WHERE CLIENTNAME = ?");
-		findFileOwnerStatement = connection.prepareStatement("SELECT CLIENTNAME from FILES WHERE FILENAME = ?");
-		//findFilesFromFileTypeStatement = connection.prepareStatement("SELECT * from FILES WHERE FILENAME = %?%");
+		deleteFileStatement = connection.prepareStatement("DELETE FROM FILES WHERE CLIENTNAME = ? AND FILENAME = ?");
 		deleteFilesStatement = connection.prepareStatement("DELETE FROM FILES WHERE CLIENTNAME = ?");
 	}
 

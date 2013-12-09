@@ -37,11 +37,18 @@ import org.apache.tika.Tika;
  * - [IMPLEMENTED] The client unregisters at the server (when the client stops sharing files) :
  * 		"unregister:clientname"
  * 
- * - A client asks a specific file to another client for downloading it
+ * - [IMPLEMENTED] A client asks a specific file to another client for downloading it
  * 		"download:filename"
  * 
- * - The other client gives the size of the file, and start sending out the file bytes :
+ * - [IMPLEMENTED] The other client gives the size of the file, and start sending out the file bytes :
  * 		"download:filename:filesize\nfilebytes" (\n stands for a new line)
+ * 
+ * - A client notifies the server that he wants to share a new file
+ * 		"addfile:filename&fileType"
+ * 
+ * - A client notifies the server that he does not share a file anymore
+ * 		"deletefile:filename"
+ * 
  * 
  * OPTIONAL PART
  * 
@@ -97,6 +104,7 @@ public class Client {
 	ClientServer clientServer;
 	Socket downloadSocket;
 	private String pathForDownloadedFile;
+	private ClientProbe clientProbe;
 
 
 	public Client(String sharedFilePath, String address, String port, String name, String downloadPort) throws IOException {
@@ -183,6 +191,9 @@ public class Client {
 		registerMessage += ":"+getDownloadPort();
 		wr.println(registerMessage);
 		wr.flush();
+		
+		clientProbe = new ClientProbe(this);
+		new Thread(clientProbe).start();
 	}
 
 	public void unshare() throws IOException{
@@ -216,8 +227,6 @@ public class Client {
 			requestMessage+= "client=" + clientName + ":";
 		}
 		
-		System.out.println(requestMessage);
-
 		wr.println(requestMessage);
 		wr.flush();
 	}
@@ -248,6 +257,21 @@ public class Client {
 		dwr.println("download:" + fileName);
 		dwr.flush();
 		
+	}
+	
+	public void addFile(String string, String pathPrefix) {
+		filesList.put(string, pathPrefix);
+		System.out.println("File : " + string.split("&")[0] + " added");
+	}
+	
+	public void removeFile(String string){
+		for(Entry<String, String> entry : filesList.entrySet()){
+			if(entry.getKey().startsWith(string + "&")){
+				filesList.remove(entry.getKey());
+				System.out.println("File : " + string + " removed");
+				break;
+			}
+		}
 	}
 
 	public static void main(String[] args) throws IOException {
