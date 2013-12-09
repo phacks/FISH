@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 
 import logic.Client;
 
@@ -40,7 +41,16 @@ public class ResultButton extends JButton implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == this){
-			client.download(name + "&" + type, address, Integer.toString(port));
+			String pathForDownloadedFile = "";
+			
+			JFileChooser chooser = new JFileChooser();
+		    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		    int option = chooser.showSaveDialog(null);
+		    if (option == JFileChooser.APPROVE_OPTION)
+		    {
+		        pathForDownloadedFile = chooser.getCurrentDirectory().getAbsolutePath() + "/";
+		    }
+			client.download(name + "&" + type, address, Integer.toString(port), pathForDownloadedFile);
 		}
 	}
 

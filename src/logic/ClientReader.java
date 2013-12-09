@@ -41,7 +41,7 @@ public class ClientReader implements Runnable {
 					int fileSize = Integer.parseInt(str.split(":")[2]);
 					System.out.println("Downloading " + fileName + ", size : " + fileSize + " bytes" );
 					
-					File newFile = new File(client.getSharedFilePath(), fileName);
+					File newFile = new File(client.getPathForDownloadedFile(), fileName);
 					FileOutputStream fos = new FileOutputStream(newFile);
 					
 					int content;
@@ -55,7 +55,6 @@ public class ClientReader implements Runnable {
 				}
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 
 	}

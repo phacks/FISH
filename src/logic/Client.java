@@ -11,8 +11,6 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map.Entry;
 
 import org.apache.tika.Tika;
@@ -98,6 +96,7 @@ public class Client {
 	ClientReader clientReader;
 	ClientServer clientServer;
 	Socket downloadSocket;
+	private String pathForDownloadedFile;
 
 
 	public Client(String sharedFilePath, String address, String port, String name, String downloadPort) throws IOException {
@@ -171,17 +170,14 @@ public class Client {
 		new Thread(new ClientReader(this, clientWindow, rd)).start();
 		
 		String registerMessage = "register:";
-		//Iterator<String> it = filesList.iterator();
+
 		if(filesList.size() == 0){
 			registerMessage += " ";
 		}
 		for(Entry<String, String> entry : filesList.entrySet()){
 			registerMessage += entry.getKey() +",";
 		}
-//		while(it.hasNext()){
-//			String s = it.next();
-//			registerMessage += s+",";
-//		}
+
 		registerMessage = registerMessage.substring(0, registerMessage.length() - 1);
 		registerMessage += ":"+getName();
 		registerMessage += ":"+getDownloadPort();
@@ -218,7 +214,9 @@ public class Client {
 		wr.flush();
 	}
 	
-	public void download(String fileName, String address, String downloadPort){
+	public void download(String fileName, String address, String downloadPort, String pathForDownloadedFile){
+		
+		this.setPathForDownloadedFile(pathForDownloadedFile);
 		
 		PrintWriter dwr = null;
 		BufferedReader drd = null;
@@ -328,6 +326,15 @@ public class Client {
 
 	public void setSharedFilePath(String sharedFilePath) {
 		this.sharedFilePath = sharedFilePath;
+	}
+
+	public String getPathForDownloadedFile() {
+		return pathForDownloadedFile;
+	}
+
+
+	public void setPathForDownloadedFile(String pathForDownloadedFile) {
+		this.pathForDownloadedFile = pathForDownloadedFile;
 	}
 
 	public static final String SHAREDFILEPATH = "shared/";

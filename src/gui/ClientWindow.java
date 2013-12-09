@@ -44,9 +44,7 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 
 		this.setVisible(true);
 
-		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-
-		this.addWindowListener(exitListener);
+		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 
 	private void initializeMainPanel() {
@@ -60,6 +58,10 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 	}
 
 	public void setRegisteredView(){
+		
+		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		this.addWindowListener(exitListener);
+		
 		tabbedPane.removeAll();
 		tabbedPane.add("Search", searchPanel);
 		tabbedPane.add("Results", resultsPanel);
@@ -88,6 +90,9 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 
 				tabbedPane.removeAll();
 				tabbedPane.add("Registration", registrationPanel);
+				
+				this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+				this.removeWindowListener(exitListener);
 
 				this.repaint();
 				this.revalidate();

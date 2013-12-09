@@ -20,7 +20,7 @@ public class ClientServer implements Runnable {
 
 	@Override
 	public void run() {
-		while (true) {
+		while (! serverSocket.isClosed()) {
 			Socket socket;
 			try {
 				socket = this.serverSocket.accept();
@@ -28,13 +28,13 @@ public class ClientServer implements Runnable {
 				clientHandler.setPriority( clientHandler.getPriority() + 1 );
 				clientHandler.start();
 			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 	}
 
 	public void closeSocket() throws IOException {
-		this.serverSocket.close();		
+		this.serverSocket.close();	
+		
 	}
 
 }
