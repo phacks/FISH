@@ -59,7 +59,7 @@ public class ResultsPanel extends JPanel {
 			address = arguments[3];
 			downloadPort = Integer.parseInt(arguments[4]);
 			
-			this.add(new ResultButton(client, fileName, fileType, clientName, address, downloadPort));
+			this.add(new ResultButton(client, window, fileName, fileType, clientName, address, downloadPort));
 		}
 	}
 

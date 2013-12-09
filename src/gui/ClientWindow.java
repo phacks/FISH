@@ -27,6 +27,7 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 	private SearchPanel searchPanel;
 	private ClientWindow clientWindow = this;
 	private ResultsPanel resultsPanel; 
+	private DownloadsPanel downloadsPanel;
 
 	public ClientWindow(Client client) {
 
@@ -35,6 +36,7 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 		registrationPanel = new RegistrationPanel(client, this);
 		searchPanel = new SearchPanel(client, this);
 		resultsPanel = new ResultsPanel(client, this);
+		downloadsPanel = new DownloadsPanel(client, this);
 
 		this.setLocationRelativeTo(null);
 
@@ -65,6 +67,7 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 		tabbedPane.removeAll();
 		tabbedPane.add("Search", searchPanel);
 		tabbedPane.add("Results", resultsPanel);
+		tabbedPane.add("Downloads", downloadsPanel);
 
 		this.repaint();
 		this.revalidate();
@@ -130,5 +133,22 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 		this.repaint();
 		this.revalidate();
 	}
+	
+	public void setDownloads() {
+		tabbedPane.setSelectedComponent(downloadsPanel);
+		this.repaint();
+		this.revalidate();
+	}
 
+	public void newDownload(String string) {
+		downloadsPanel.newDownload(string);
+	}
+	
+	public void initializeDownload(String name, int max){
+		downloadsPanel.initializeDownload(name, max);
+	}
+
+	public void updateDownload(String name, int n){
+		downloadsPanel.updateDownload(name, n);
+	}
 }

@@ -198,17 +198,25 @@ public class Client {
 	public void request(String[] keywords, String fileType, String clientName){
 
 		String requestMessage = "request:";
+		System.out.println(keywords[0]);
+		System.out.println(keywords);
+		if (keywords[0].length() == 0 && keywords.length == 1){
+			requestMessage += " ";
+		}
 		for (String keyword : keywords){
 			requestMessage += keyword + ",";
 		}
 		requestMessage = requestMessage.substring(0, requestMessage.length() - 1);
+		requestMessage += ":";
 
 		if(! fileType.equals("")){
-			requestMessage+= ":type=" + fileType;
+			requestMessage+= "type=" + fileType + ":";
 		}
 		if(! clientName.equals("")){
-			requestMessage+= ":client=" + clientName;
+			requestMessage+= "client=" + clientName + ":";
 		}
+		
+		System.out.println(requestMessage);
 
 		wr.println(requestMessage);
 		wr.flush();

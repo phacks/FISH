@@ -41,12 +41,17 @@ public class ClientReader implements Runnable {
 					int fileSize = Integer.parseInt(str.split(":")[2]);
 					System.out.println("Downloading " + fileName + ", size : " + fileSize + " bytes" );
 					
+					clientWindow.initializeDownload(fileName, fileSize);
+					
 					File newFile = new File(client.getPathForDownloadedFile(), fileName);
 					FileOutputStream fos = new FileOutputStream(newFile);
 					
 					int content;
+					int n = 0;
 					while ((content = rd.read()) != -1){
 						fos.write(content);
+						n += 2;
+						clientWindow.updateDownload(fileName, n);
 					}
 					fos.close();
 					System.out.println("Download completed");

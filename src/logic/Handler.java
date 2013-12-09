@@ -49,6 +49,7 @@ public class Handler extends Thread{
 			while ((str = rd.readLine()) != null){
 				String[] parseCommand = str.split(":");
 				String command = parseCommand[0];
+				System.out.println(str);
 
 				if (command.equals("register")){
 					String[] parseFiles = parseCommand[1].split(",");
@@ -71,7 +72,15 @@ public class Handler extends Thread{
 				}
 
 				if (command.equals("request")){
-					String[] keywords = parseCommand[1].split(",");
+					String[] keywords;
+					if (parseCommand[1].equals(" ")){
+						System.out.println("OK");
+						keywords = new String[1];
+						keywords[0] = ""; 
+					}
+					else{
+						keywords = parseCommand[1].split(",");
+					}
 
 					if (parseCommand.length == 2){
 						fileSearch(keywords, "", "");

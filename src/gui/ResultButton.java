@@ -12,45 +12,50 @@ import javax.swing.JFileChooser;
 import logic.Client;
 
 public class ResultButton extends JButton implements ActionListener{
-	
+
 	private String address;
 	private int port;
 	private Client client;
 	private String name;
 	private String type;
+	private ClientWindow window;
 
-	public ResultButton(Client client, String name, String type, String clientName, String address, int port) {
+	public ResultButton(Client client, ClientWindow window, String name, String type, String clientName, String address, int port) {
 		super(name + " - " + type + " @ " + clientName);
 		setFocusPainted(false);
-        setMargin(new Insets(0, 0, 0, 0));
-        setContentAreaFilled(false);
-        setBorderPainted(false);
-        setOpaque(false);
-        setForeground(Color.blue);
-        setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        this.name = name;
-        this.address = address;
-        this.port = port;
-        this.client = client;
-        this.type = type;
-        
-        this.addActionListener(this);
+		setMargin(new Insets(0, 0, 0, 0));
+		setContentAreaFilled(false);
+		setBorderPainted(false);
+		setOpaque(false);
+		setForeground(Color.blue);
+		setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+		this.window = window;
+		this.name = name;
+		this.address = address;
+		this.port = port;
+		this.client = client;
+		this.type = type;
+
+		this.addActionListener(this);
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == this){
 			String pathForDownloadedFile = "";
-			
+
 			JFileChooser chooser = new JFileChooser();
-		    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		    int option = chooser.showSaveDialog(null);
-		    if (option == JFileChooser.APPROVE_OPTION)
-		    {
-		        pathForDownloadedFile = chooser.getCurrentDirectory().getAbsolutePath() + "/";
-		    }
-			client.download(name + "&" + type, address, Integer.toString(port), pathForDownloadedFile);
+			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			int option = chooser.showSaveDialog(null);
+			if (option == JFileChooser.APPROVE_OPTION)
+			{
+				pathForDownloadedFile = chooser.getCurrentDirectory().getAbsolutePath() + "/";
+				window.newDownload(name + " - " + type + " @ " + client.getName());
+
+				window.setDownloads();
+				client.download(name + "&" + type, address, Integer.toString(port), pathForDownloadedFile);
+			}
 		}
 	}
 
