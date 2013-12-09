@@ -27,6 +27,7 @@ public class Handler extends Thread{
 	String clientName;
 	private PreparedStatement findFilesFromKeywordsStatement;
 	private PreparedStatement deleteFileStatement;
+	private PreparedStatement findFileStatement;
 
 	Handler(Socket socket, Connection connection) throws IOException, SQLException { // thread constructor
 		this.socket = socket;
@@ -120,6 +121,12 @@ public class Handler extends Thread{
 					String fileName = str.split(":")[1].split("&")[0];
 					deleteFile(fileName);
 				}
+				if(command.equals("isavailable")){
+					String fileName = parseCommand[1];
+					String remoteClientName = parseCommand[2];
+					
+					isAvailable(fileName, remoteClientName);
+				}
 			}
 
 
@@ -131,6 +138,25 @@ public class Handler extends Thread{
 
 	}
 
+
+	private void isAvailable(String fileName, String remoteClientName) throws SQLException {
+		findFileStatement.setString(1, remoteClientName);
+		findFileStatement.setString(2, fileName);
+		
+		ResultSet result = findFileStatement.executeQuery();
+		String reply = "isavailable:";
+		
+		if (result.next()){
+			reply += "yes";
+		}
+		else{
+			reply += "no";
+		}
+		
+		reply += ":" + fileName + ":" + remoteClientName;
+		
+		send(reply);
+	}
 
 	private void addFile(String fileName, String fileType) throws SQLException {
 
@@ -302,6 +328,8 @@ public class Handler extends Thread{
 		findClientStatement = connection.prepareStatement("SELECT * from USERS WHERE CLIENTNAME = ?");
 		unregisterClientStatement = connection.prepareStatement("DELETE FROM USERS WHERE CLIENTNAME = ?");
 
+		findFileStatement = connection.prepareStatement("SELECT * from FILES WHERE CLIENTNAME = ? AND FILENAME = ?");
+		
 		addFileStatement = connection.prepareStatement("INSERT INTO FILES (filename, type, clientname) VALUES (?, ?, ?)");
 		deleteFileStatement = connection.prepareStatement("DELETE FROM FILES WHERE CLIENTNAME = ? AND FILENAME = ?");
 		deleteFilesStatement = connection.prepareStatement("DELETE FROM FILES WHERE CLIENTNAME = ?");

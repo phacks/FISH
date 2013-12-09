@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 import logic.Client;
 
@@ -19,6 +20,8 @@ public class ResultButton extends JButton implements ActionListener{
 	private String name;
 	private String type;
 	private ClientWindow window;
+	String clientName;
+	public String id;
 
 	public ResultButton(Client client, ClientWindow window, String name, String type, String clientName, String address, int port) {
 		super(name + " - " + type + " @ " + clientName);
@@ -30,12 +33,15 @@ public class ResultButton extends JButton implements ActionListener{
 		setForeground(Color.blue);
 		setCursor(new Cursor(Cursor.HAND_CURSOR));
 
+		this.clientName = clientName;
 		this.window = window;
 		this.name = name;
 		this.address = address;
 		this.port = port;
 		this.client = client;
 		this.type = type;
+		
+		this.id = name + clientName; 
 
 		this.addActionListener(this);
 	}
@@ -43,20 +49,32 @@ public class ResultButton extends JButton implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == this){
-			String pathForDownloadedFile = "";
+			
+			client.checkDownload(name, clientName);
 
-			JFileChooser chooser = new JFileChooser();
-			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			int option = chooser.showSaveDialog(null);
-			if (option == JFileChooser.APPROVE_OPTION)
-			{
-				pathForDownloadedFile = chooser.getCurrentDirectory().getAbsolutePath() + "/";
-				window.newDownload(name + " - " + type + " @ " + client.getName());
-
-				window.setDownloads();
-				client.download(name + "&" + type, address, Integer.toString(port), pathForDownloadedFile);
-			}
+			
 		}
+	}
+
+	public void startDownload() {
+		String pathForDownloadedFile = "";
+
+		JFileChooser chooser = new JFileChooser();
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		int option = chooser.showSaveDialog(null);
+		if (option == JFileChooser.APPROVE_OPTION)
+		{
+			pathForDownloadedFile = chooser.getCurrentDirectory().getAbsolutePath() + "/";
+			window.newDownload(name + " - " + type + " @ " + clientName);
+
+			window.setDownloads();
+			client.download(name + "&" + type, address, Integer.toString(port), pathForDownloadedFile);
+		}
+	}
+
+	public void fileNotAvailable() {
+		JOptionPane.showMessageDialog(null,"The requested file is not shared by the client anymore.");
+		window.setSearchPanel();
 	}
 
 }

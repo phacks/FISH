@@ -1,6 +1,6 @@
 package gui;
 
-import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -150,5 +150,25 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 
 	public void updateDownload(String name, int n){
 		downloadsPanel.updateDownload(name, n);
+	}
+
+	public void setWaitingCursor() {
+		setCursor(new Cursor(Cursor.WAIT_CURSOR));
+	}
+
+	public void startDownload(String fileName, String remoteClientName) {
+		setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		resultsPanel.startDownload(fileName, remoteClientName);
+	}
+
+	public void fileNotAvailable(String fileName, String remoteClientName) {
+		setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		resultsPanel.fileNotAvailable(fileName, remoteClientName);
+	}
+
+	public void setSearchPanel() {
+		tabbedPane.setSelectedComponent(searchPanel);
+		this.repaint();
+		this.revalidate();
 	}
 }

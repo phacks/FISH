@@ -52,6 +52,10 @@ public class ClientHandler extends Thread {
 						e.printStackTrace();
 					}
 				}
+//				
+//				if(str.startsWith("isavailable:")){
+//					
+//				}
 			}
 
 		} catch (IOException e) {

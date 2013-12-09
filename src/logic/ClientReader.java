@@ -58,6 +58,17 @@ public class ClientReader implements Runnable {
 					
 					client.downloadSocket.close();
 				}
+				if(str.startsWith("isavailable")){
+					String isAvailable = str.split(":")[1];
+					String fileName = str.split(":")[2];
+					String remoteClientName = str.split(":")[3];
+					if(isAvailable.equals("yes")){
+						client.startDownload(fileName, remoteClientName);
+					}
+					if(isAvailable.equals("no")){
+						client.fileNotAvailable(fileName, remoteClientName);
+					}
+				}
 			}
 		} catch (IOException e) {
 		}

@@ -10,7 +10,7 @@ import javax.swing.JPanel;
 import logic.Client;
 
 public class ResultsPanel extends JPanel {
-	
+
 	Client client;
 	ClientWindow window;
 	JLabel request = new JLabel();
@@ -19,16 +19,16 @@ public class ResultsPanel extends JPanel {
 	public ResultsPanel(Client client, ClientWindow clientWindow) {
 		this.client = client;
 		this.window = clientWindow;
-		
+
 		this.setPreferredSize(new Dimension(600, 500));
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		
+
 		notFoundLabel.setForeground(Color.red);
-		
+
 		this.add(request);
-		
+
 	}
-	
+
 	public void setRequestText(String request){
 		this.request.setText("Request -> " + request);
 	}
@@ -42,7 +42,7 @@ public class ResultsPanel extends JPanel {
 	public void setResults(String string) {
 		this.removeAll();
 		this.add(request);
-		
+
 		String[] results = string.split(",");
 		String fileName;
 		String fileType;
@@ -50,7 +50,7 @@ public class ResultsPanel extends JPanel {
 		String address;
 		int downloadPort;
 		String[] arguments;
-		
+
 		for(String result : results){
 			arguments = result.split("&");
 			fileName = arguments[0];
@@ -58,8 +58,28 @@ public class ResultsPanel extends JPanel {
 			clientName = arguments[2];
 			address = arguments[3];
 			downloadPort = Integer.parseInt(arguments[4]);
-			
+
 			this.add(new ResultButton(client, window, fileName, fileType, clientName, address, downloadPort));
+		}
+	}
+
+	public void startDownload(String fileName, String remoteClientName) {
+		int c = this.getComponentCount();
+
+		for (int i = 1; i < c; i++){
+			if (((ResultButton) this.getComponent(i)).id.equals(fileName + remoteClientName)){
+				((ResultButton) this.getComponent(i)).startDownload();
+			}
+		}
+	}
+
+	public void fileNotAvailable(String fileName, String remoteClientName) {
+		int c = this.getComponentCount();
+
+		for (int i = 1; i < c; i++){
+			if (((ResultButton) this.getComponent(i)).id.equals(fileName + remoteClientName)){
+				((ResultButton) this.getComponent(i)).fileNotAvailable();
+			}
 		}
 	}
 

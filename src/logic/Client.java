@@ -37,17 +37,24 @@ import org.apache.tika.Tika;
  * - [IMPLEMENTED] The client unregisters at the server (when the client stops sharing files) :
  * 		"unregister:clientname"
  * 
- * - [IMPLEMENTED] A client asks a specific file to another client for downloading it
+ * - [IMPLEMENTED] A client asks a specific file to another client for downloading it :
  * 		"download:filename"
  * 
  * - [IMPLEMENTED] The other client gives the size of the file, and start sending out the file bytes :
  * 		"download:filename:filesize\nfilebytes" (\n stands for a new line)
  * 
- * - A client notifies the server that he wants to share a new file
+ * - [IMPLEMENTED] A client notifies the server that he wants to share a new file :
  * 		"addfile:filename&fileType"
  * 
- * - A client notifies the server that he does not share a file anymore
+ * - [IMPLEMENTED] A client notifies the server that he does not share a file anymore :
  * 		"deletefile:filename"
+ * 
+ * - A client asks the server if a specific file is shared by a specific client ;
+ * 		"isavailable:filename:clientname"
+ * 
+ * - The server replies :
+ * 		"isavailable:yes:filename:clientname"
+ * 		"isavailable:no:filename:clientname"
  * 
  * 
  * OPTIONAL PART
@@ -105,6 +112,7 @@ public class Client {
 	Socket downloadSocket;
 	private String pathForDownloadedFile;
 	private ClientProbe clientProbe;
+	boolean replied;
 
 
 	public Client(String sharedFilePath, String address, String port, String name, String downloadPort) throws IOException {
@@ -275,6 +283,22 @@ public class Client {
 			}
 		}
 	}
+	
+
+
+	public void checkDownload(String fileName, String remoteClientName) {
+		wr.println("isavailable:" + fileName + ":" + remoteClientName);
+		wr.flush();
+		clientWindow.setWaitingCursor();
+	}
+	
+	public void startDownload(String fileName, String remoteClientName){
+		clientWindow.startDownload(fileName, remoteClientName);
+	}
+	
+	public void fileNotAvailable(String fileName, String remoteClientName){
+		clientWindow.fileNotAvailable(fileName, remoteClientName);
+	}
 
 	public static void main(String[] args) throws IOException {
 
@@ -374,4 +398,5 @@ public class Client {
 	public static final String SHAREDFILEPATH = "shared/";
 	public static final String ADDRESS = "localhost";
 	public static final String PORT = "10000";
+
 }
