@@ -150,8 +150,8 @@ public class Handler extends Thread{
 	private void deleteFile(String fileName) throws SQLException {
 
 		deleteFileStatement.setString(1, clientName);
-		deleteFileStatement.setString(1, fileName);
-		int rows = deleteFilesStatement.executeUpdate();
+		deleteFileStatement.setString(2, fileName);
+		int rows = deleteFileStatement.executeUpdate();
 		if (rows > 0) {
 			System.out.println("File " + fileName + " from " + clientName + " has been deleted from the nameserver");
 		} else {

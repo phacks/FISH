@@ -261,14 +261,16 @@ public class Client {
 	
 	public void addFile(String string, String pathPrefix) {
 		filesList.put(string, pathPrefix);
-		System.out.println("File : " + string.split("&")[0] + " added");
+		wr.println("addfile:" + string);
+		wr.flush();
 	}
 	
 	public void removeFile(String string){
 		for(Entry<String, String> entry : filesList.entrySet()){
 			if(entry.getKey().startsWith(string + "&")){
 				filesList.remove(entry.getKey());
-				System.out.println("File : " + string + " removed");
+				wr.println("deletefile:" + string);
+				wr.flush();
 				break;
 			}
 		}
