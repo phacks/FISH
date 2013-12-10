@@ -1,7 +1,6 @@
 package logic;
 import gui.ClientWindow;
-
-import java.io.BufferedReader;
+	import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,7 +31,7 @@ import org.apache.tika.Tika;
  * 
  * - [IMPLEMENTED] The server replies to the requesting client by sending either a 'not found' message or addresses of client(s) sharing the requested file :
  * 		"reply:notfound"
- * 		"reply:found:filename1&filetype1&clientname1&address1&downloadport1,...,filenameN&filetypeN&clientnameN&addressN&downloadportN" (more than one file match the request)
+ * 		"reply:found:filename1&filetype1&clientname1&address1&downloadport1,...,filenameN&filetypeN&clientnameN&addressN&downloadportN"
  * 
  * - [IMPLEMENTED] The client unregisters at the server (when the client stops sharing files) :
  * 		"unregister:clientname"
@@ -49,10 +48,10 @@ import org.apache.tika.Tika;
  * - [IMPLEMENTED] A client notifies the server that he does not share a file anymore :
  * 		"deletefile:filename"
  * 
- * - A client asks the server if a specific file is shared by a specific client ;
- * 		"isavailable:filename:clientname"
+ * - [IMPLEMENTED] A client asks the server if a specific file is shared by a specific client ;
+ * 		"isavailable:filename:remoteclientname"
  * 
- * - The server replies :
+ * - [IMPLEMENTED] The server replies :
  * 		"isavailable:yes:filename:clientname"
  * 		"isavailable:no:filename:clientname"
  * 
@@ -94,27 +93,78 @@ import org.apache.tika.Tika;
  */
 
 
+/**
+ * Client process, that can connect to a server, add or delete shared files, request files from the server,
+ * check the availability of a file and download files. 
+ * 
+ * Connections with the server or other clients are made through sockets. The client listens to the server replies through a separate thread (ClientReader)
+ * and another thread (ClientProbe) regularly checks for new or removed shared files. The client has a server
+ * part (ClientServer), aimed at providing interfaces for other clients to download his files, in which
+ * new connections are hendled by a ClientHandler. 
+ * 
+ * The GUI for the client is contained in a ClientWindow.
+ * 
+ * @param sharedFilePath The path to the shared files folder
+ * @param address The IP address of the server
+ * @param port The port of the server
+ * @param name The name of the client
+ * @param downloadPort The port used for the server-side of the client
+ * 
+ * @see ClientReader
+ * @see ClientProbe
+ * @see ClientHandler
+ * @see ClientServer
+ * @see Server
+ * @see ClientWindow
+ *
+ */
 public class Client {
 
+	/** The path towards the shared folder of the client */
 	private String sharedFilePath;
+	/** The IP address of the server */
 	private String address;
+	/** The port of the server */
 	private String port;
+	/** The name of the client */
 	private String name;
+	/** The port of the server-side part of the client */
 	private String downloadPort;
+	/** Hashmap containing files names and types as the key, and their path as the value */
 	HashMap<String, String> filesList = new HashMap<String, String>();
+	/** Tika is a tool provided by Apache to obtain the type of a file */
 	Tika tika = new Tika();
+	/** Socket used to communicate with the server */
 	Socket clientSocket;
+	/** JFrame holding all the GUI */
 	ClientWindow clientWindow;
+	/** Aimed at sending messages to the server  */
 	PrintWriter wr;
+	/** Aimed at receiving messages from the server */
 	private BufferedReader rd;
+	/** Separate thread to receive messages from the server or other clients */
 	ClientReader clientReader;
+	/** Server-side part of the client, to provide the interface for other clients to download shared files */
 	ClientServer clientServer;
+	/** Socket used when downloading a file. The socket is connected to the server part of a remote client */
 	Socket downloadSocket;
+	/** The path to the directory where a downloaded file will be stored */
 	private String pathForDownloadedFile;
+	/** Separate thread to regularly check for new or removed files in the shared folder */
 	private ClientProbe clientProbe;
-	boolean replied;
+	
 
-
+	/**
+	 * Sets each field to their default value, and starts the GUI thread
+	 * 
+	 * @param sharedFilePath The path towards the shared folder of the client
+	 * @param address The IP address of the server
+	 * @param port The port of the server
+	 * @param name The name of the client
+	 * @param downloadPort The port of the server-side part of the client
+	 * @throws IOException
+	 * @see ClientWindow
+	 */
 	public Client(String sharedFilePath, String address, String port, String name, String downloadPort) throws IOException {
 		this.setSharedFilePath(sharedFilePath);
 
@@ -132,6 +182,16 @@ public class Client {
 	}
 
 
+	/**
+	 * Fills the hashmap with file names, type and paths for files found in the shared folder or any directory, 
+	 * subdirectory and so on.
+	 * File type is obtained with the help of the Tika library, provyded by Apache: see http://tika.apache.org for more information
+	 * 
+	 * @param fileNameList The hashmap containing the file names, types and paths
+	 * @param sharedFilePath The path towards the shared folder of the client
+	 * @param pathPrefix Allows to call recursively the method to browse directories. Initially set to "" to browse the shared folder.
+	 * @throws IOException
+	 */
 	private void getFileNames(HashMap<String, String> fileNameList, String sharedFilePath, String pathPrefix) throws IOException {
 
 		File file = new File(sharedFilePath);
@@ -150,10 +210,20 @@ public class Client {
 
 	}
 	
+	/**
+	 * Given a file name and type (i.e. the key), returns the file path
+	 * @param fileNameAndType
+	 * @return The path to the file
+	 */
 	public String findPathToFile(String fileNameAndType){
 		return filesList.get(fileNameAndType);
 	}
 
+	/**
+	 * Attempts to connect to the server with the creationSocket socket
+	 * 
+	 * @return true if the socket was successfully created, false otherwise
+	 */
 	private boolean creationSocket(){
 
 		try {
@@ -174,6 +244,11 @@ public class Client {
 
 	}
 
+	/**
+	 * Sends a "register" message to the server, containing the client's file names, types, and port for its server part
+	 * 
+	 * @throws IOException
+	 */
 	public void share() throws IOException{
 		
 		getFileNames(filesList, sharedFilePath, "");
@@ -204,6 +279,10 @@ public class Client {
 		new Thread(clientProbe).start();
 	}
 
+	/**
+	 * Sends an "unregister" message to the server
+	 * @throws IOException
+	 */
 	public void unshare() throws IOException{
 
 		String unregisterMessage = "unregister";
@@ -214,6 +293,14 @@ public class Client {
 		clientSocket.close();
 	}
 
+	/**
+	 * Sends a "request" message to the server. The request message is composed of one or more keywords, and optionnally
+	 * a file type and a client name (not implemented yet).
+	 * 
+	 * @param keywords The keywords for the search
+	 * @param fileType The file type required by the client search ("" matches all files) 
+	 * @param clientName The remote client required by the client search (not implemented yet)
+	 */
 	public void request(String[] keywords, String fileType, String clientName){
 
 		String requestMessage = "request:";
@@ -237,6 +324,17 @@ public class Client {
 		wr.flush();
 	}
 	
+	/**
+	 * Sends a "download" message to a remote client to start a download.
+	 * 
+	 * This methods creates a new ClientReader thread to handle the download.
+	 * 
+	 * @param fileName The name of the file to be downloaded
+	 * @param address The IP address of the owner the file to be downloaded
+	 * @param downloadPort The port of the server part of the owner the file to be downloaded
+	 * @param pathForDownloadedFile The path of the directory where the file should be saved 
+	 * @see ClientReader
+	 */
 	public void download(String fileName, String address, String downloadPort, String pathForDownloadedFile){
 		
 		this.setPathForDownloadedFile(pathForDownloadedFile);
@@ -265,12 +363,21 @@ public class Client {
 		
 	}
 	
+	/**
+	 * Adds a new file to the hashmap (when a new file is detected by the ClientProbe)
+	 * @param string The file name and type of the file
+	 * @param pathPrefix The path (relative to the shared directory) to the file
+	 */
 	public void addFile(String string, String pathPrefix) {
 		filesList.put(string, pathPrefix);
 		wr.println("addfile:" + string);
 		wr.flush();
 	}
 	
+	/**
+	 * Deletes a file from the hashmap (when a removed file is detected by the ClientProbe)
+	 * @param string
+	 */
 	public void removeFile(String string){
 		for(Entry<String, String> entry : filesList.entrySet()){
 			if(entry.getKey().startsWith(string + "&")){
@@ -284,20 +391,43 @@ public class Client {
 	
 
 
+	/**
+	 * Asks the server ("isavailable") if a particular file from a particular client is available for download
+	 * 
+	 * @param fileName The name of the file
+	 * @param remoteClientName The name of the remote client
+	 */
 	public void checkDownload(String fileName, String remoteClientName) {
 		wr.println("isavailable:" + fileName + ":" + remoteClientName);
 		wr.flush();
 		clientWindow.setWaitingCursor();
 	}
 	
+	/**
+	 * Notifies the GUI that a download has begun
+	 * 
+	 * @param fileName The name of the file
+	 * @param remoteClientName The name of the remote client
+	 */
 	public void startDownload(String fileName, String remoteClientName){
 		clientWindow.startDownload(fileName, remoteClientName);
 	}
 	
+	/**
+	 * Notifies the GUI that the requested file is not available
+	 * 
+	 * @param fileName The name of the file
+	 * @param remoteClientName The name of the remote client
+	 */
 	public void fileNotAvailable(String fileName, String remoteClientName){
 		clientWindow.fileNotAvailable(fileName, remoteClientName);
 	}
 
+	/**
+	 * Main function, whose purpose is to set default values and to instanciate the Client.
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException {
 
 		String sharedFilePath = null;
