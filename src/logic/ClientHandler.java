@@ -8,11 +8,24 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+/**
+ * Handles a client communications with others clients through sockets. The handler provides the interface for 
+ * uploading files to other clients. The handler is also responsible for communicating with the server's ClientFailureDetector
+ *
+ * @see Client
+ * @see ClientServer
+ * @see ClientReader
+ * @see ClientFailureDetector
+ */
 public class ClientHandler extends Thread {
 
+	/** The socket used to communicate with the client */
 	Socket socket;
+	/** Used to read incoming messages from the client */
 	BufferedReader rd;
+	/** Used to send messages to the client */
 	PrintWriter wr;
+	/** The client the handler is started on */
 	Client client;
 
 	public ClientHandler(Socket socket, Client client) throws IOException {
@@ -23,6 +36,11 @@ public class ClientHandler extends Thread {
 		wr = new PrintWriter(socket.getOutputStream());
 	}
 
+	/**
+	 * Read incoming messages from the client, parses them and call the appropriate methods to 
+	 * reply and/or execute actions.
+	 * @see java.lang.Thread#run()
+	 */
 	@Override
 	public void run() {
 		String str;

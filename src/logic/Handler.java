@@ -27,9 +27,9 @@ public class Handler extends Thread{
 	
 	/** The socket used to communicate with the client */
 	Socket socket;
-	/** The BufferedReader used to read incoming messages from the client */
+	/** Used to read incoming messages from the client */
 	BufferedReader rd;
-	/** The BufferedReader used to send messages to the client */
+	/** Used to send messages to the client */
 	PrintWriter wr;
 	/** The connection to the datasource */
 	Connection connection;
