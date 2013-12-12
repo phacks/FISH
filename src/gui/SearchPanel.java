@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.UnknownHostException;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -80,7 +81,12 @@ public class SearchPanel extends JPanel implements ActionListener{
 				fileType = "audio";
 			}
 			
-			client.request(keywords, fileType, "");
+			try {
+				client.request(keywords, fileType, "");
+			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			String requestText = "Keywords: ";
 			for (String keyword : keywords){
 				requestText += keyword + " ";

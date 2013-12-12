@@ -131,13 +131,13 @@ public class Client {
 	/** The port of the server-side part of the client */
 	private String downloadPort;
 	/** Hashmap containing files names and types as the key, and their path as the value */
-	private HashMap<String, String> filesList = new HashMap<String, String>();
+	protected HashMap<String, String> filesList = new HashMap<String, String>();
 	/** Tika is a tool provided by Apache to obtain the type of a file */
 	Tika tika = new Tika();
 	/** Socket used to communicate with the server */
 	Socket clientSocket;
 	/** JFrame holding all the GUI */
-	ClientWindow clientWindow;
+	private ClientWindow clientWindow;
 	/** Aimed at sending messages to the server  */
 	PrintWriter wr;
 	/** Aimed at receiving messages from the server */
@@ -176,8 +176,8 @@ public class Client {
 		
 		this.setDownloadPort(downloadPort);
 
-		clientWindow = new ClientWindow(this);
-		clientWindow.run();
+		setClientWindow(new ClientWindow(this));
+		getClientWindow().run();
 		
 	}
 
@@ -255,10 +255,10 @@ public class Client {
 
 		creationSocket();
 		
-		clientServer = new ClientServer(this, getDownloadPort());
+		clientServer = new ClientServer(this, getDownloadPort(), getClientWindow());
 		new Thread(clientServer).start();
 
-		new Thread(new ClientReader(this, clientWindow, rd)).start();
+		new Thread(new ClientReader(this, getClientWindow(), rd)).start();
 		
 		String registerMessage = "register:";
 
@@ -300,8 +300,9 @@ public class Client {
 	 * @param keywords The keywords for the search
 	 * @param fileType The file type required by the client search ("" matches all files) 
 	 * @param clientName The remote client required by the client search (not implemented yet)
+	 * @throws UnknownHostException 
 	 */
-	public void request(String[] keywords, String fileType, String clientName){
+	public void request(String[] keywords, String fileType, String clientName) throws UnknownHostException{
 
 		String requestMessage = "request:";
 		if (keywords[0].length() == 0 && keywords.length == 1){
@@ -356,7 +357,7 @@ public class Client {
 			e.printStackTrace();
 		}
 		
-		new Thread(new ClientReader(this, clientWindow, drd)).start();
+		new Thread(new ClientReader(this, getClientWindow(), drd)).start();
 		
 		dwr.println("download:" + fileName);
 		dwr.flush();
@@ -400,7 +401,7 @@ public class Client {
 	public void checkDownload(String fileName, String remoteClientName) {
 		wr.println("isavailable:" + fileName + ":" + remoteClientName);
 		wr.flush();
-		clientWindow.setWaitingCursor();
+		getClientWindow().setWaitingCursor();
 	}
 	
 	/**
@@ -410,7 +411,7 @@ public class Client {
 	 * @param remoteClientName The name of the remote client
 	 */
 	public void startDownload(String fileName, String remoteClientName){
-		clientWindow.startDownload(fileName, remoteClientName);
+		getClientWindow().startDownload(fileName, remoteClientName);
 	}
 	
 	/**
@@ -420,7 +421,7 @@ public class Client {
 	 * @param remoteClientName The name of the remote client
 	 */
 	public void fileNotAvailable(String fileName, String remoteClientName){
-		clientWindow.fileNotAvailable(fileName, remoteClientName);
+		getClientWindow().fileNotAvailable(fileName, remoteClientName);
 	}
 
 	/**
@@ -530,6 +531,15 @@ public class Client {
 
 	public void setFilesList(HashMap<String, String> filesList) {
 		this.filesList = filesList;
+	}
+
+	public ClientWindow getClientWindow() {
+		return clientWindow;
+	}
+
+
+	public void setClientWindow(ClientWindow clientWindow) {
+		this.clientWindow = clientWindow;
 	}
 
 	public static final String SHAREDFILEPATH = "shared/";

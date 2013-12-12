@@ -1,5 +1,7 @@
 package logic;
 
+import gui.ClientWindow;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -20,15 +22,18 @@ public class ClientServer implements Runnable {
 	Client client;
 	/** The socket used for server-side client socket communications */
 	ServerSocket serverSocket;
+	
+	ClientWindow clientWindow;
 
 	/**
 	 * @param client The client on which this thread is started
 	 * @param downloadPort The port which support the server-side client's communications
 	 */
-	public ClientServer(Client client, String downloadPort) {
+	public ClientServer(Client client, String downloadPort, ClientWindow clientWindow) {
 		try {
 			this.serverSocket = new ServerSocket(Integer.parseInt(downloadPort));
 			this.client = client;
+			this.clientWindow = clientWindow;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -44,7 +49,7 @@ public class ClientServer implements Runnable {
 			Socket socket;
 			try {
 				socket = this.serverSocket.accept();
-				ClientHandler clientHandler =  new ClientHandler(socket, client);
+				ClientHandler clientHandler =  new ClientHandler(socket, client, clientWindow);
 				clientHandler.setPriority( clientHandler.getPriority() + 1 );
 				clientHandler.start();
 			} catch (IOException e) {
