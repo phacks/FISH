@@ -115,6 +115,9 @@ public class ClientHandler extends Thread {
 					String clientName = str.split(":")[1];
 					((ClientP2P) client).setSuccessorName(clientName);
 				}
+				if(str.startsWith("quit")){
+					break;
+				}
 				
 			}
 			

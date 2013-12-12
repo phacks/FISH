@@ -107,7 +107,7 @@ public class ClientReader implements Runnable {
 					}
 				}
 			}
-			client.downloadSocket.close();
+			rd.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

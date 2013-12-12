@@ -46,7 +46,8 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 
 		this.setVisible(true);
 
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		this.addWindowListener(exitListener);
 	}
 
 	private void initializeMainPanel() {

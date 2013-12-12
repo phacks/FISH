@@ -42,7 +42,7 @@ public class ClientP2P extends Client{
 
 	
 	/** Separate thread to receive messages from the server or other clients */
-	ClientReader clientReader;
+	//ClientReader clientReader;
 	/** Server-side part of the client, to provide the interface for other clients to download shared files */
 	ClientServer clientServer;
 	/** Socket used when downloading a file. The socket is connected to the server part of a remote client */
@@ -131,6 +131,19 @@ public class ClientP2P extends Client{
 		prd = new BufferedReader(new InputStreamReader(predecessorSocket.getInputStream()));
 		new Thread(new ClientReader(this, clientWindow, prd)).start();
 		predecessorName = clientName;
+	}
+	
+	public void unshare() throws IOException{
+		pwr.println("successor:" + successorName + ":" + successorSocket.getRemoteSocketAddress().toString().split("/")[0] + ":" +successorSocket.getPort());
+		pwr.flush();
+//		swr.println("predecessor:" + predecessorName + ":" + predecessorSocket.getRemoteSocketAddress().toString().split(":")[0].substring(1) + ":" +predecessorSocket.getPort());
+//		swr.flush();
+		pwr.println("quit");
+		pwr.flush();
+		swr.println("quit");
+		swr.flush();
+		predecessorSocket.close();
+		successorSocket.close();
 	}
 
 
