@@ -131,7 +131,7 @@ public class Client {
 	/** The port of the server-side part of the client */
 	private String downloadPort;
 	/** Hashmap containing files names and types as the key, and their path as the value */
-	HashMap<String, String> filesList = new HashMap<String, String>();
+	private HashMap<String, String> filesList = new HashMap<String, String>();
 	/** Tika is a tool provided by Apache to obtain the type of a file */
 	Tika tika = new Tika();
 	/** Socket used to communicate with the server */
@@ -192,7 +192,7 @@ public class Client {
 	 * @param pathPrefix Allows to call recursively the method to browse directories. Initially set to "" to browse the shared folder.
 	 * @throws IOException
 	 */
-	private void getFileNames(HashMap<String, String> fileNameList, String sharedFilePath, String pathPrefix) throws IOException {
+	protected void getFileNames(HashMap<String, String> fileNameList, String sharedFilePath, String pathPrefix) throws IOException {
 
 		File file = new File(sharedFilePath);
 		File[] arrayFilesOrDirectories = file.listFiles();
@@ -200,7 +200,7 @@ public class Client {
 		for(int i = 0; i < arrayFilesOrDirectories.length; i++){
 			if(arrayFilesOrDirectories[i].isFile() && ! arrayFilesOrDirectories[i].isHidden()){
 				String mediaType = tika.detect(arrayFilesOrDirectories[i]).split("/")[0];
-				filesList.put(arrayFilesOrDirectories[i].getName() + "&" + mediaType, pathPrefix);
+				getFilesList().put(arrayFilesOrDirectories[i].getName() + "&" + mediaType, pathPrefix);
 			}
 			else if(arrayFilesOrDirectories[i].isDirectory()){
 				String directoryPath = arrayFilesOrDirectories[i].getPath();
@@ -216,7 +216,7 @@ public class Client {
 	 * @return The path to the file
 	 */
 	public String findPathToFile(String fileNameAndType){
-		return filesList.get(fileNameAndType);
+		return getFilesList().get(fileNameAndType);
 	}
 
 	/**
@@ -251,7 +251,7 @@ public class Client {
 	 */
 	public void share() throws IOException{
 		
-		getFileNames(filesList, sharedFilePath, "");
+		getFileNames(getFilesList(), sharedFilePath, "");
 
 		creationSocket();
 		
@@ -262,10 +262,10 @@ public class Client {
 		
 		String registerMessage = "register:";
 
-		if(filesList.size() == 0){
+		if(getFilesList().size() == 0){
 			registerMessage += " ";
 		}
-		for(Entry<String, String> entry : filesList.entrySet()){
+		for(Entry<String, String> entry : getFilesList().entrySet()){
 			registerMessage += entry.getKey() +",";
 		}
 
@@ -369,7 +369,7 @@ public class Client {
 	 * @param pathPrefix The path (relative to the shared directory) to the file
 	 */
 	public void addFile(String string, String pathPrefix) {
-		filesList.put(string, pathPrefix);
+		getFilesList().put(string, pathPrefix);
 		wr.println("addfile:" + string);
 		wr.flush();
 	}
@@ -379,9 +379,9 @@ public class Client {
 	 * @param string
 	 */
 	public void removeFile(String string){
-		for(Entry<String, String> entry : filesList.entrySet()){
+		for(Entry<String, String> entry : getFilesList().entrySet()){
 			if(entry.getKey().startsWith(string + "&")){
-				filesList.remove(entry.getKey());
+				getFilesList().remove(entry.getKey());
 				wr.println("deletefile:" + string);
 				wr.flush();
 				break;
@@ -521,6 +521,15 @@ public class Client {
 
 	public void setPathForDownloadedFile(String pathForDownloadedFile) {
 		this.pathForDownloadedFile = pathForDownloadedFile;
+	}
+
+	public HashMap<String, String> getFilesList() {
+		return filesList;
+	}
+
+
+	public void setFilesList(HashMap<String, String> filesList) {
+		this.filesList = filesList;
 	}
 
 	public static final String SHAREDFILEPATH = "shared/";
