@@ -5,6 +5,8 @@ import java.awt.Cursor;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.UnknownHostException;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -50,7 +52,12 @@ public class ResultButton extends JButton implements ActionListener{
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == this){
 			
-			client.checkDownload(name, clientName);
+			try {
+				client.checkDownload(name, clientName, address, Integer.toString(port));
+			} catch (NumberFormatException | IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 
 			
 		}
@@ -69,6 +76,9 @@ public class ResultButton extends JButton implements ActionListener{
 
 			window.setDownloads();
 			client.download(name + "&" + type, address, Integer.toString(port), pathForDownloadedFile);
+		}
+		else{
+			window.setResultsPanel();
 		}
 	}
 

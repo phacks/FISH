@@ -171,4 +171,10 @@ public class ClientWindow extends JFrame implements Runnable, ActionListener{
 		this.repaint();
 		this.revalidate();
 	}
+
+	public void setResultsPanel() {
+		tabbedPane.setSelectedComponent(resultsPanel);
+		this.repaint();
+		this.revalidate();
+	}
 }

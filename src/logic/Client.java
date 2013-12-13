@@ -1,6 +1,7 @@
 package logic;
 import gui.ClientWindow;
-	import java.io.BufferedReader;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -397,8 +398,10 @@ public class Client {
 	 * 
 	 * @param fileName The name of the file
 	 * @param remoteClientName The name of the remote client
+	 * @param port2 
+	 * @param address2 
 	 */
-	public void checkDownload(String fileName, String remoteClientName) {
+	public void checkDownload(String fileName, String remoteClientName, String address, String port) throws NumberFormatException, UnknownHostException, IOException{
 		wr.println("isavailable:" + fileName + ":" + remoteClientName);
 		wr.flush();
 		getClientWindow().setWaitingCursor();

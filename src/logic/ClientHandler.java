@@ -129,6 +129,25 @@ public class ClientHandler extends Thread {
 					clientWindow.setResults(str.split(":")[1]);
 				}
 				
+				if(str.startsWith("isavailable")){
+					String fileName = str.split(":")[1];
+					
+					boolean isAvailable = ((ClientP2P) client).isAvailable(fileName);
+					
+					String reply = "isavailable:";
+					if(isAvailable)
+					{
+						reply+= "yes";
+					}
+					else{
+						reply += "no";
+					}
+					reply += ":" + fileName + ":" + str.split(":")[2];
+					wr.println(reply);
+					wr.flush();
+					
+				}
+				
 				if(str.startsWith("request")){
 					String[] parseCommand = str.split(":");
 					String askersName = parseCommand[1];

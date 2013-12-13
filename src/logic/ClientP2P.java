@@ -11,6 +11,7 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Map.Entry;
 
 
 
@@ -133,8 +134,6 @@ public class ClientP2P extends Client{
 	public void unshare() throws IOException{
 		pwr.println("successor:" + successorName + ":" + successorSocket.getRemoteSocketAddress().toString().split("/")[0] + ":" +successorSocket.getPort());
 		pwr.flush();
-		//		swr.println("predecessor:" + predecessorName + ":" + predecessorSocket.getRemoteSocketAddress().toString().split(":")[0].substring(1) + ":" +predecessorSocket.getPort());
-		//		swr.flush();
 		pwr.println("quit");
 		pwr.flush();
 		swr.println("quit");
@@ -225,73 +224,31 @@ public class ClientP2P extends Client{
 
 	}
 	
-	public void checkDownload(String name, String clientName){
-		getClientWindow().startDownload(name, clientName);
+	public void checkDownload(String name, String clientName, String address, String port) throws NumberFormatException, UnknownHostException, IOException{
+		
+		Socket tempSocket = new Socket(address, Integer.parseInt(port));
+		PrintWriter tempWriter = new PrintWriter(tempSocket.getOutputStream());
+		BufferedReader tempReader = new BufferedReader(new InputStreamReader(tempSocket.getInputStream()));
+		tempWriter.println("isavailable:" + name + ":" + clientName);
+		tempWriter.flush();
+		new ClientReader(this, getClientWindow(), tempReader).run();
+		
+		getClientWindow().setWaitingCursor();
+	}
+	
+	public boolean isAvailable(String fileName) {
+		Set<String> setKeys =  filesList.keySet();
+		Iterator<String> it = setKeys.iterator();
+		while(it.hasNext()){
+			if(it.next().split("&")[0].equals(fileName)){
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
-
-	/**
-	 * Fills the hashmap with file names, type and paths for files found in the shared folder or any directory, 
-	 * subdirectory and so on.
-	 * File type is obtained with the help of the Tika library, provyded by Apache: see http://tika.apache.org for more information
-	 * 
-	 * @param fileNameList The hashmap containing the file names, types and paths
-	 * @param sharedFilePath The path towards the shared folder of the client
-	 * @param pathPrefix Allows to call recursively the method to browse directories. Initially set to "" to browse the shared folder.
-	 * @throws IOException
-	 */
-	//	private void getFileNames(HashMap<String, String> fileNameList, String sharedFilePath, String pathPrefix) throws IOException {
-	//
-	//		File file = new File(sharedFilePath);
-	//		File[] arrayFilesOrDirectories = file.listFiles();
-	//
-	//		for(int i = 0; i < arrayFilesOrDirectories.length; i++){
-	//			if(arrayFilesOrDirectories[i].isFile() && ! arrayFilesOrDirectories[i].isHidden()){
-	//				String mediaType = tika.detect(arrayFilesOrDirectories[i]).split("/")[0];
-	//				filesList.put(arrayFilesOrDirectories[i].getName() + "&" + mediaType, pathPrefix);
-	//			}
-	//			else if(arrayFilesOrDirectories[i].isDirectory()){
-	//				String directoryPath = arrayFilesOrDirectories[i].getPath();
-	//				getFileNames(fileNameList, directoryPath, pathPrefix + arrayFilesOrDirectories[i].getName() + "/");
-	//			}
-	//		}
-	//
-	//	}
-
-	/**
-	 * Given a file name and type (i.e. the key), returns the file path
-	 * @param fileNameAndType
-	 * @return The path to the file
-	 */
-	//	public String findPathToFile(String fileNameAndType){
-	//		return filesList.get(fileNameAndType);
-	//	}
-
-	/**
-	 * Attempts to connect to the server with the creationSocket socket
-	 * 
-	 * @return true if the socket was successfully created, false otherwise
-	 */
-	//	private boolean creationSocket(){
-	//
-	//		try {
-	//			clientSocket = new Socket();
-	//			clientSocket.connect(new InetSocketAddress(address, Integer.parseInt(port)), 1000);
-	//			wr = new PrintWriter(clientSocket.getOutputStream());
-	//			rd = new BufferedReader( new InputStreamReader(clientSocket.getInputStream()));
-	//
-	//		} catch (SocketTimeoutException e) {
-	//			return false;
-	//		} catch (UnknownHostException e) {
-	//			return false;
-	//		} catch (IOException e) {
-	//			e.printStackTrace();
-	//			return false;
-	//		}
-	//		return true;
-	//
-	//	}
-
+	
 	/**
 	 * Sends a "register" message to the server, containing the client's file names, types, and port for its server part
 	 * 
@@ -309,154 +266,31 @@ public class ClientP2P extends Client{
 		setPredecessor(getName(), getAddress(), getDownloadPort());
 
 		enterRing(super.getAddress(), super.getPort());
-
-
-
 	}
-
-	/**
-	 * Sends an "unregister" message to the server
-	 * @throws IOException
-	 */
-	//	public void unshare() throws IOException{
-	//
-	//		String unregisterMessage = "unregister";
-	//		wr.println(unregisterMessage);
-	//		wr.flush();
-	//		
-	//		clientServer.closeSocket();
-	//		clientSocket.close();
-	//	}
-
-	/**
-	 * Sends a "request" message to the server. The request message is composed of one or more keywords, and optionnally
-	 * a file type and a client name (not implemented yet).
-	 * 
-	 * @param keywords The keywords for the search
-	 * @param fileType The file type required by the client search ("" matches all files) 
-	 * @param clientName The remote client required by the client search (not implemented yet)
-	 */
-	//	public void request(String[] keywords, String fileType, String clientName){
-	//
-	//		String requestMessage = "request:";
-	//		if (keywords[0].length() == 0 && keywords.length == 1){
-	//			requestMessage += " ";
-	//		}
-	//		for (String keyword : keywords){
-	//			requestMessage += keyword + ",";
-	//		}
-	//		requestMessage = requestMessage.substring(0, requestMessage.length() - 1);
-	//		requestMessage += ":";
-	//
-	//		if(! fileType.equals("")){
-	//			requestMessage+= "type=" + fileType + ":";
-	//		}
-	//		if(! clientName.equals("")){
-	//			requestMessage+= "client=" + clientName + ":";
-	//		}
-	//		
-	//		wr.println(requestMessage);
-	//		wr.flush();
-	//	}
-
-	/**
-	 * Sends a "download" message to a remote client to start a download.
-	 * 
-	 * This methods creates a new ClientReader thread to handle the download.
-	 * 
-	 * @param fileName The name of the file to be downloaded
-	 * @param address The IP address of the owner the file to be downloaded
-	 * @param downloadPort The port of the server part of the owner the file to be downloaded
-	 * @param pathForDownloadedFile The path of the directory where the file should be saved 
-	 * @see ClientReader
-	 */
-	//	public void download(String fileName, String address, String downloadPort, String pathForDownloadedFile){
-	//		
-	//		this.setPathForDownloadedFile(pathForDownloadedFile);
-	//		
-	//		PrintWriter dwr = null;
-	//		BufferedReader drd = null;
-	//		
-	//		// Creates the socket to the client that has the requested file
-	//		try {
-	//			downloadSocket = new Socket();
-	//			downloadSocket.connect(new InetSocketAddress(address, Integer.parseInt(downloadPort)), 1000);
-	//			dwr = new PrintWriter(downloadSocket.getOutputStream());
-	//			drd = new BufferedReader( new InputStreamReader(downloadSocket.getInputStream()));
-	//		} catch (SocketTimeoutException e) {
-	//			System.err.println(e);
-	//		} catch (UnknownHostException e) {
-	//			System.err.println(e);
-	//		} catch (IOException e) {
-	//			e.printStackTrace();
-	//		}
-	//		
-	//		new Thread(new ClientReader(this, clientWindow, drd)).start();
-	//		
-	//		dwr.println("download:" + fileName);
-	//		dwr.flush();
-	//		
-	//	}
-
+	
 	/**
 	 * Adds a new file to the hashmap (when a new file is detected by the ClientProbe)
 	 * @param string The file name and type of the file
 	 * @param pathPrefix The path (relative to the shared directory) to the file
 	 */
-	//	public void addFile(String string, String pathPrefix) {
-	//		filesList.put(string, pathPrefix);
-	//		wr.println("addfile:" + string);
-	//		wr.flush();
-	//	}
-
+	public void addFile(String string, String pathPrefix) {
+		getFilesList().put(string, pathPrefix);
+	}
+	
 	/**
 	 * Deletes a file from the hashmap (when a removed file is detected by the ClientProbe)
 	 * @param string
 	 */
-	//	public void removeFile(String string){
-	//		for(Entry<String, String> entry : filesList.entrySet()){
-	//			if(entry.getKey().startsWith(string + "&")){
-	//				filesList.remove(entry.getKey());
-	//				wr.println("deletefile:" + string);
-	//				wr.flush();
-	//				break;
-	//			}
-	//		}
-	//	}
+	public void removeFile(String string){
+		for(Entry<String, String> entry : getFilesList().entrySet()){
+			if(entry.getKey().startsWith(string + "&")){
+				getFilesList().remove(entry.getKey());
+				break;
+			}
+		}
+	}
 
 
-
-	/**
-	 * Asks the server ("isavailable") if a particular file from a particular client is available for download
-	 * 
-	 * @param fileName The name of the file
-	 * @param remoteClientName The name of the remote client
-	 */
-	//	public void checkDownload(String fileName, String remoteClientName) {
-	//		wr.println("isavailable:" + fileName + ":" + remoteClientName);
-	//		wr.flush();
-	//		clientWindow.setWaitingCursor();
-	//	}
-
-	/**
-	 * Notifies the GUI that a download has begun
-	 * 
-	 * @param fileName The name of the file
-	 * @param remoteClientName The name of the remote client
-	 */
-	//	public void startDownload(String fileName, String remoteClientName){
-	//		clientWindow.startDownload(fileName, remoteClientName);
-	//	}
-
-	/**
-	 * Notifies the GUI that the requested file is not available
-	 * 
-	 * @param fileName The name of the file
-	 * @param remoteClientName The name of the remote client
-	 */
-	//	public void fileNotAvailable(String fileName, String remoteClientName){
-	//		clientWindow.fileNotAvailable(fileName, remoteClientName);
-	//	}
 
 	/**
 	 * Main function, whose purpose is to set default values and to instanciate the Client.
